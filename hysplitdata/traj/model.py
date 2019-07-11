@@ -282,7 +282,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         io.FormattedTextFileReader.__init__(self)
         self.trajectory_data = trajectoryData
         self.end_hour_duration = 0
-        self.vertical_coordinate = const.Vertical.PRESSURE
+        self.vertical_coordinate = const.VerticalCoordinate.PRESSURE
         self.height_unit = const.HeightUnit.METERS
         self.utc = pytz.utc
     
@@ -362,17 +362,17 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         return self.trajectory_data
                 
     def adjust_vertical_coordinate(self, vert_motion):
-        if self.vertical_coordinate == const.Vertical.NOT_SET:
+        if self.vertical_coordinate == const.VerticalCoordinate.NOT_SET:
             if vert_motion.startswith("ISOBA"):
-                self.vertical_coordinate = const.Vertical.PRESSURE
+                self.vertical_coordinate = const.VerticalCoordinate.PRESSURE
             elif vert_motion.startswith("THETA"):
-                self.vertical_coordinate = const.Vertical.THETA
+                self.vertical_coordinate = const.VerticalCoordinate.THETA
             else:
-                self.vertical_coordinate = const.Vertical.ABOVE_GROUND_LEVEL
-        elif self.vertical_coordinate == const.Vertical.THETA:
+                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
+        elif self.vertical_coordinate == const.VerticalCoordinate.THETA:
             # if model run does not have theta values
             if not vert_motion.startswith("THETA"):
-                self.vertical_coordinate = const.Vertical.ABOVE_GROUND_LEVEL
+                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
                 
     def _read_header(self, pd):
 
@@ -421,17 +421,17 @@ class VerticalCoordinateFactory:
     @staticmethod
     def create_instance(vert_coord, height_unit, traj):
         
-        if vert_coord == const.Vertical.PRESSURE:
+        if vert_coord == const.VerticalCoordinate.PRESSURE:
             return PressureCoordinate(traj)
-        elif vert_coord == const.Vertical.ABOVE_GROUND_LEVEL:
+        elif vert_coord == const.VerticalCoordinate.ABOVE_GROUND_LEVEL:
             if traj.has_terrain_profile():
                 return TerrainHeightCoordinate(traj, height_unit)
             else:
                 return HeightCoordinate(traj, height_unit)
-        elif vert_coord == const.Vertical.THETA:
+        elif vert_coord == const.VerticalCoordinate.THETA:
             if "THETA" in traj.others:
                 return ThetaCoordinate(traj)
-        elif vert_coord == const.Vertical.METEO:
+        elif vert_coord == const.VerticalCoordinate.METEO:
                 return OtherVerticalCoordinate(traj)
         
         return BlankVerticalCoordinate(traj)

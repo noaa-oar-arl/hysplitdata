@@ -10,7 +10,7 @@ def plotData():
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
-    r.set_vertical_coordinate(const.Vertical.NOT_SET, const.HeightUnit.METERS)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
     r.read("data/tdump")
     return d
 
@@ -244,7 +244,7 @@ def test_TrajectoryDump_fix_vertical_coordinates():
     d.trajectories.append(t)
 
     # Run and check
-    d.fix_vertical_coordinates(const.Vertical.PRESSURE, const.HeightUnit.METERS)
+    d.fix_vertical_coordinates(const.VerticalCoordinate.PRESSURE, const.HeightUnit.METERS)
 
     assert isinstance(t.vertical_coord, model.PressureCoordinate)
     assert t.vertical_coord.values[0] == 700.0
@@ -275,7 +275,7 @@ def test_TrajectoryDump_fix_start_levels():
     t.pressures = [600.0]
     d.trajectories.append(t)
 
-    d.fix_vertical_coordinates(const.Vertical.PRESSURE, const.HeightUnit.METERS)
+    d.fix_vertical_coordinates(const.VerticalCoordinate.PRESSURE, const.HeightUnit.METERS)
     
     # Run and check
     d.fix_start_levels()
@@ -459,7 +459,7 @@ def test_TrajectoryDumpFileReader___init__():
 
     assert r.trajectory_data is d
     assert r.end_hour_duration == 0
-    assert r.vertical_coordinate == const.Vertical.PRESSURE
+    assert r.vertical_coordinate == const.VerticalCoordinate.PRESSURE
     assert r.height_unit == const.HeightUnit.METERS
     assert r.utc is not None
 
@@ -485,7 +485,7 @@ def test_TrajectoryDumpFileReader_read():
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
-    r.set_vertical_coordinate(const.Vertical.NOT_SET, const.HeightUnit.METERS)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
     utc = pytz.utc
     
     o = r.read("data/tdump")
@@ -584,7 +584,7 @@ def test_TrajectoryDumpFileReader_read_fmt0():
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
-    r.set_vertical_coordinate(const.Vertical.NOT_SET, const.HeightUnit.METERS)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
     utc = pytz.utc
     
     r.read("data/tdump_fmt0")
@@ -682,25 +682,25 @@ def test_TrajectoryDumpFileReader_adjust_vertical_coordinate():
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
 
-    r.vertical_coordinate = const.Vertical.NOT_SET
+    r.vertical_coordinate = const.VerticalCoordinate.NOT_SET
     r.adjust_vertical_coordinate("ISOBA")
-    assert r.vertical_coordinate == const.Vertical.PRESSURE
+    assert r.vertical_coordinate == const.VerticalCoordinate.PRESSURE
 
-    r.vertical_coordinate = const.Vertical.NOT_SET
+    r.vertical_coordinate = const.VerticalCoordinate.NOT_SET
     r.adjust_vertical_coordinate("THETA")
-    assert r.vertical_coordinate == const.Vertical.THETA
+    assert r.vertical_coordinate == const.VerticalCoordinate.THETA
 
-    r.vertical_coordinate = const.Vertical.NOT_SET
+    r.vertical_coordinate = const.VerticalCoordinate.NOT_SET
     r.adjust_vertical_coordinate("SOMETHING")
-    assert r.vertical_coordinate == const.Vertical.ABOVE_GROUND_LEVEL
+    assert r.vertical_coordinate == const.VerticalCoordinate.ABOVE_GROUND_LEVEL
 
-    r.vertical_coordinate = const.Vertical.THETA
+    r.vertical_coordinate = const.VerticalCoordinate.THETA
     r.adjust_vertical_coordinate("PRESSURE")
-    assert r.vertical_coordinate == const.Vertical.ABOVE_GROUND_LEVEL
+    assert r.vertical_coordinate == const.VerticalCoordinate.ABOVE_GROUND_LEVEL
 
-    r.vertical_coordinate = const.Vertical.THETA
+    r.vertical_coordinate = const.VerticalCoordinate.THETA
     r.adjust_vertical_coordinate("THETA")
-    assert r.vertical_coordinate == const.Vertical.THETA
+    assert r.vertical_coordinate == const.VerticalCoordinate.THETA
 
 
 def test_AbstractVerticalCoordinate___init__():
@@ -931,28 +931,28 @@ def test_VerticalCoordinateFactory_create_instance():
     t = model.Trajectory()
     
     height_unit = const.HeightUnit.METERS
-    vertical_coordinate = const.Vertical.PRESSURE
+    vertical_coordinate = const.VerticalCoordinate.PRESSURE
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.PressureCoordinate)
     
-    vertical_coordinate = const.Vertical.ABOVE_GROUND_LEVEL
+    vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.HeightCoordinate)
     
     t.others["TERR_MSL"] = [1.0, 2.0]
-    vertical_coordinate = const.Vertical.ABOVE_GROUND_LEVEL
+    vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.TerrainHeightCoordinate)
     
     t.others["THETA"] = [0.0, 1.0]
-    vertical_coordinate = const.Vertical.THETA
+    vertical_coordinate = const.VerticalCoordinate.THETA
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.ThetaCoordinate)
     
-    vertical_coordinate = const.Vertical.METEO
+    vertical_coordinate = const.VerticalCoordinate.METEO
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.OtherVerticalCoordinate)
     
-    vertical_coordinate = const.Vertical.NONE
+    vertical_coordinate = const.VerticalCoordinate.NONE
     vc = model.VerticalCoordinateFactory.create_instance(vertical_coordinate, height_unit, t)
     assert isinstance(vc, model.BlankVerticalCoordinate)

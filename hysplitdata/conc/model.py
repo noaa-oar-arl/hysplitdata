@@ -17,7 +17,7 @@ class ConcentrationDump:
         self.meteo_model = None    # meteorological model identification
         self.meteo_starting_datetime = None
         self.meteo_forecast_hour = 0
-        self.release_datetime = []
+        self.release_datetimes = []
         self.release_locs = []
         self.release_heights = []
         self.grid_deltas = None     # (dlon, dlat)
@@ -190,7 +190,7 @@ class ConcentrationDumpFileReader:
                 cur += 4;
                 v = struct.unpack_from('>iiiifffi', buff, cur); cur += 36;
                 year = util.restore_year(v[0])
-                cdump.release_datetime.append(datetime.datetime(year, v[1], v[2], v[3], v[7], 0, 0, self.utc));
+                cdump.release_datetimes.append(datetime.datetime(year, v[1], v[2], v[3], v[7], 0, 0, self.utc));
                 cdump.release_locs.append((v[5], v[4]))
                 cdump.release_heights.append(v[6])
     

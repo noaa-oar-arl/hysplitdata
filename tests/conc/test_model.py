@@ -17,7 +17,7 @@ def test_ConcentrationDump___init__():
     assert hasattr(m, "meteo_model")
     assert hasattr(m, "meteo_starting_datetime")
     assert hasattr(m, "meteo_forecast_hour")
-    assert hasattr(m, "release_datetime")
+    assert hasattr(m, "release_datetimes")
     assert hasattr(m, "release_locs")
     assert hasattr(m, "release_heights")
     assert hasattr(m, "grid_deltas")
@@ -211,11 +211,11 @@ def test_ConcentrationDumpFileReader_read():
     assert m.meteo_starting_datetime == datetime.datetime(1983, 9, 25, 15, 0, 0, 0, utc)
     assert m.meteo_forecast_hour == 0.0
     
-    assert len(m.release_datetime) == 2
+    assert len(m.release_datetimes) == 2
     assert len(m.release_locs) == 2
     assert len(m.release_heights) == 2
-    assert m.release_datetime[0]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
-    assert m.release_datetime[1]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert m.release_datetimes[0]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert m.release_datetimes[1]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
     assert m.release_locs[0] == pytest.approx((-84.22, 39.90))
     assert m.release_locs[1] == pytest.approx((-84.22, 39.90))
     assert m.release_heights[0] == pytest.approx( 10.0)
