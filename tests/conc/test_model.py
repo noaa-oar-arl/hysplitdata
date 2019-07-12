@@ -1,4 +1,5 @@
 import datetime
+import numpy
 import pytest
 import pytz
 from hysplitdata import util
@@ -162,7 +163,32 @@ def test_ConcentrationGrid_clone(cdump):
     assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
     assert g.starting_forecast_hr == 0
     assert g.ending_forecast_hr == 0
+
+    assert g.conc is not target.conc
+    for a, b in numpy.nditer([g.conc, target.conc]):
+        assert a == b
+
     assert g.nonzero_conc_count == 854
+    assert g.extension == None
+    
+
+def test_ConcentrationGrid_clone_except_conc(cdump):
+    target = cdump.grids[0]
+    g = target.clone_except_conc()
+    utc = pytz.utc
+    
+    assert g.parent is cdump
+    assert g.time_index == 0
+    assert g.pollutant_index == 0
+    assert g.vert_level_index == 0
+    assert g.pollutant == "TEST"
+    assert g.vert_level == 100
+    assert g.starting_datetime == datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
+    assert g.starting_forecast_hr == 0
+    assert g.ending_forecast_hr == 0
+    assert g.conc == None
+    assert g.nonzero_conc_count == 0
     assert g.extension == None
     
     

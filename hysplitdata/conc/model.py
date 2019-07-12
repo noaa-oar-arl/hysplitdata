@@ -120,7 +120,7 @@ class ConcentrationGrid:
     def longitudes(self):
         return self.parent.longitudes
     
-    def clone(self, deep_copy_conc=True):
+    def clone(self, copy_conc=True):
         o = ConcentrationGrid(self.parent)
         o.time_index = self.time_index
         o.pollutant_index = self.pollutant_index
@@ -131,8 +131,8 @@ class ConcentrationGrid:
         o.ending_datetime = copy.deepcopy(self.ending_datetime)
         o.starting_forecast_hr = self.starting_forecast_hr
         o.ending_forecast_hr = self.ending_forecast_hr
-        o.conc = copy.deepcopy(self.conc)
-        o.nonzero_conc_count = self.nonzero_conc_count
+        o.conc = copy.deepcopy(self.conc) if copy_conc else None
+        o.nonzero_conc_count = self.nonzero_conc_count if copy_conc else 0
         o.extension = None if self.extension is None else self.extension.clone()
         return o
     
@@ -266,7 +266,7 @@ class ConcentrationDumpFileReader:
                             v = struct.unpack_from(fmt, buff, cur); cur += 4 * count
                             # TODO: test this line. may need to transpose it.
                             g.conc = numpy.array(v).reshape(lat_cnt, lon_cnt)
-                        else:
+                        elif packing_flag == 1:
                             g.conc = numpy.zeros((lat_cnt, lon_cnt))
                             v = struct.unpack_from('>i', buff, cur); cur += 4;
                             g.nonzero_conc_count = count = v[0]
@@ -281,6 +281,8 @@ class ConcentrationDumpFileReader:
                                 for k in range(left):
                                     v = struct.unpack_from('>hhf', buff, cur); cur += 8;
                                     g.conc[v[1]-1, v[0]-1] = v[2]
+                        else:
+                            raise Exception("unsupported packing option [{}]".format(packing_flag))
                         cur += 4;
                         
                 current_time_index += 1
