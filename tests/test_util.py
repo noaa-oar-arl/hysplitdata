@@ -1,3 +1,11 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# test_util.py
+#
+# Performs unit tests on functions and class methods defined in util.py.
+# ---------------------------------------------------------------------------
+
 import pytest
 from hysplitdata import util
 

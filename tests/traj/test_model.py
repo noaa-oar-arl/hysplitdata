@@ -1,3 +1,11 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# test_model.py
+#
+# Performs unit tests on functions and class methods defined in traj/model.py.
+# ---------------------------------------------------------------------------
+
 import datetime
 import pytest
 import pytz

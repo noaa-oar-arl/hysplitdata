@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# model.py
+#
+# Declares classes representing a trajectory dump and its data.
+# A reader for a trajectory dump file is included.
+# ---------------------------------------------------------------------------
+
 from abc import ABC, abstractmethod
 import datetime
 import logging

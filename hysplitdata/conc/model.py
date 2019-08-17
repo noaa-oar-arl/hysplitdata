@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# model.py
+#
+# Declares classes representing a concentration dump and its data grids.
+# A reader for a concentration dump file is included.
+# ---------------------------------------------------------------------------
+
 import copy
 import datetime
 import logging

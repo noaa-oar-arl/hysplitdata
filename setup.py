@@ -1,3 +1,13 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# setup.py
+#
+# For installation of this package.
+#
+# usage: python setup.py install
+# ---------------------------------------------------------------------------
+
 from setuptools import setup
 
 setup(

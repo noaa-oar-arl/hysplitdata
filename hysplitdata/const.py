@@ -1,4 +1,11 @@
-# declares constants
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# const.py
+#
+# Declares constants used by this package.
+# ---------------------------------------------------------------------------
+
 
 class HeightUnit:
     METERS =    0

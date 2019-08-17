@@ -1,3 +1,11 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# io.py
+#
+# Provides classes for reading a FORTRAN-formatted text file.
+# ---------------------------------------------------------------------------
+
 import logging
 import os
 

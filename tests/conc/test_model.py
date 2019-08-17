@@ -1,3 +1,11 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# test_model.py
+#
+# Performs unit tests on functions and class methods defined in conc/model.py.
+# ---------------------------------------------------------------------------
+
 import datetime
 import numpy
 import pytest

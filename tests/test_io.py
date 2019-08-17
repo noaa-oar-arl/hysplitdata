@@ -1,3 +1,11 @@
+# ---------------------------------------------------------------------------
+# NOAA Air Resources Laboratory
+#
+# test_io.py
+#
+# Performs unit tests on functions and class methods defined in io.py.
+# ---------------------------------------------------------------------------
+
 import pytest
 from hysplitdata import io
 
