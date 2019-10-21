@@ -10,13 +10,13 @@ To install this package, run
 
 To read a trajectory dump file, say, tdump.20190712, in a Python script:
 
-    import hysplitdata
+    import hysplitdata.traj.model
     ...
     tdump = hysplitdata.traj.model.TrajectoryDump().get_reader().read("tdump.20190712")
 
 Similarly, reading a concentration dump file is done:
 
-    import hysplitdata
+    import hysplitdata.conc.model
     ...
     cdump = hysplitdata.conc.model.ConcentrationDump().get_reader().read("cdump.20190712")
 
