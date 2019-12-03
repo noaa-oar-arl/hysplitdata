@@ -270,9 +270,17 @@ class Trajectory:
     def vertical_coordinates(self, vc):
         self.vertical_coord.values = vc
     
+    @property
+    def trajectory_stddevs(self):
+        return util.myzip(self.others["SIGLON"], self.others["SIGLAT"]) \
+            if ("SIGLAT" in self.others) and ("SIGLON" in self.others) else None
+    
     def has_terrain_profile(self):
         return True if "TERR_MSL" in self.others else False
 
+    def has_trajectory_stddevs(self):
+        return True if ("SIGLAT" in self.others) and ("SIGLON" in self.others) else False
+    
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
         return

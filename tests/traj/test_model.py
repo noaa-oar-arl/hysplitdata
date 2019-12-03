@@ -425,6 +425,29 @@ def test_Trajectory_vertical_coordinates(plotData):
     t.vertical_coordinates = []
     
 
+def test_Trajectory_trajectory_stddevs(plotData):
+    t = plotData.trajectories[0]
+    
+    assert t.trajectory_stddevs == None
+    
+    # Now open a tdump file with a center-of-mass (COM) trajectory
+    
+    d = model.TrajectoryDump()
+    r = model.TrajectoryDumpFileReader(d)
+    r.set_end_hour_duration(0)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
+    r.read("data/tdump_com")
+    
+    t = d.trajectories[0]
+    p = t.trajectory_stddevs
+    
+    assert p != None
+
+    assert len(p) == 12
+    assert p[0] == pytest.approx((0.1, 0.1))
+    assert p[-1] == pytest.approx((0.5, 0.6)) # lon, lat
+
+
 def test_Trajectory_has_terrain_profile(plotData):
     t = plotData.trajectories[0]
 
@@ -434,6 +457,20 @@ def test_Trajectory_has_terrain_profile(plotData):
 
     assert t.has_terrain_profile() == True
 
+
+def test_Trajectory_has_trajectory_stddevs(plotData):
+    t = plotData.trajectories[0]
+
+    assert t.has_trajectory_stddevs() == False
+
+    t.others["SIGLAT"] = [0.1, 0.2]
+
+    assert t.has_trajectory_stddevs() == False
+
+    t.others["SIGLON"] = [0.2, 0.3]
+    
+    assert t.has_trajectory_stddevs() == True
+    
 
 def test_Trajectory_repair_starting_location():
     t = model.Trajectory()
