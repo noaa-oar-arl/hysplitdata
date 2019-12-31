@@ -57,67 +57,58 @@ class TrajectoryDump:
         return all if len(all) == 0 else list(set(all))
 
     def get_unique_start_levels(self):
-        all = [t.starting_level for t in self.trajectories]
+        all = list(filter(lambda x: x is not None, [t.starting_level for t in self.trajectories]))
         if len(all) > 0:
             all = list(set(all))
             all.sort()
         return all
 
     def get_latitude_range(self):
-        pts = self.trajectories[0].latitudes
-        amin = min(pts)
-        amax = max(pts)
-
-        for k in range(1, len(self.trajectories)):
-            pts = self.trajectories[k].latitudes
-            amin = min(amin, min(pts))
-            amax = max(amax, max(pts))
+        amin = amax = None
+        for t in self.trajectories:
+            pts = t.latitudes
+            if len(pts) > 0:
+                amin = min(pts) if amin is None else min(amin, min(pts))
+                amax = max(pts) if amax is None else max(amax, max(pts))
 
         return (amin, amax)
 
     def get_longitude_range(self):
-        pts = self.trajectories[0].longitudes
-        amin = min(pts)
-        amax = max(pts)
-
-        for k in range(1, len(self.trajectories)):
-            pts = self.trajectories[k].longitudes
-            amin = min(amin, min(pts))
-            amax = max(amax, max(pts))
+        amin = amax = None
+        for t in self.trajectories:
+            pts = t.longitudes
+            if len(pts) > 0:
+                amin = min(pts) if amin is None else min(amin, min(pts))
+                amax = max(pts) if amax is None else max(amax, max(pts))
 
         return (amin, amax)
 
     def get_age_range(self):
-        pts = self.trajectories[0].ages
-        amin = min(pts)
-        amax = max(pts)
-
-        for k in range(1, len(self.trajectories)):
-            pts = self.trajectories[k].ages
-            amin = min(amin, min(pts))
-            amax = max(amax, max(pts))
+        amin = amax = None
+        for t in self.trajectories:
+            pts = t.ages
+            if len(pts) > 0:
+                amin = min(pts) if amin is None else min(amin, min(pts))
+                amax = max(pts) if amax is None else max(amax, max(pts))
 
         return (amin, amax)
-
+    
     def get_datetime_range(self):
-        pts = self.trajectories[0].datetimes
-        amin = min(pts)
-        amax = max(pts)
-
-        for k in range(1, len(self.trajectories)):
-            pts = self.trajectories[k].datetimes
-            amin = min(amin, min(pts))
-            amax = max(amax, max(pts))
+        amin = amax = None
+        for t in self.trajectories:
+            pts = t.datetimes
+            if len(pts) > 0:
+                amin = min(pts) if amin is None else min(amin, min(pts))
+                amax = max(pts) if amax is None else max(amax, max(pts))
 
         return (amin, amax)
 
     def get_max_forecast_hour(self):
-        pts = self.trajectories[0].forecast_hours
-        amax = max(pts)
-        
-        for k in range(1, len(self.trajectories)):
-            pts = self.trajectories[k].forecast_hours
-            amax = max(amax, max(pts))
+        amax = None
+        for t in self.trajectories:
+            pts = t.forecast_hours
+            if len(pts) > 0:
+                amax = max(pts) if amax is None else max(amax, max(pts))
         
         return amax
  
@@ -141,7 +132,8 @@ class TrajectoryDump:
         # determine the starting level index
         self.uniq_start_levels = self.get_unique_start_levels()
         for t in self.trajectories:
-            t.starting_level_index = self.uniq_start_levels.index(t.starting_level)
+            if t.starting_level in self.uniq_start_levels:
+                t.starting_level_index = self.uniq_start_levels.index(t.starting_level)
 
     def dump(self, stream):
         stream.write("----- begin TrajectoryDump\n")
@@ -175,8 +167,8 @@ class Trajectory:
         self.parent = parent            # a TrajectoryDump instance
         self.starting_datetime = None
         self.starting_loc = (0, 0)
-        self.starting_level = 0
-        self.starting_level_index = -1  # determined after all starting_levels are collected
+        self.starting_level = None
+        self.starting_level_index = None  # determined after all starting_levels are collected
         self.diagnostic_names = None
         self.color = None               # when settings.color == Color.itemized
         self.vertical_coord = None      # an AbstractVerticalCoordinate instance
@@ -283,11 +275,12 @@ class Trajectory:
     
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
-        return
 
     def repair_starting_level(self):
-        self.starting_level = self.vertical_coord.repair_starting_level(self.starting_level)
-        return
+        try:
+            self.starting_level = self.vertical_coord.repair_starting_level(self.starting_level)
+        except Exception as ex:
+            self.starting_level = None
 
 
 class TrajectoryDumpFileReader(io.FormattedTextFileReader):
@@ -520,6 +513,8 @@ class TerrainHeightCoordinate(AbstractVerticalCoordinate):
         return "Meters MSL" if self.unit == const.HeightUnit.METERS else "Feet MSL"
     
     def repair_starting_level(self, v):
+        if len(self.values) < 1:
+            raise Exception("empty array")
         return self.values[0]
  
 
@@ -538,6 +533,8 @@ class HeightCoordinate(AbstractVerticalCoordinate):
         return "Meters AGL" if self.unit == const.HeightUnit.METERS else "Feet AGL"
        
     def repair_starting_level(self, v):
+        if len(self.values) < 1:
+            raise Exception("empty array")
         return self.values[0]
  
     

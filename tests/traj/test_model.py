@@ -316,8 +316,8 @@ def test_Trajectory___init__():
     assert hasattr(t, 'parent')
     assert hasattr(t, 'starting_datetime')
     assert t.starting_loc == (0, 0)
-    assert t.starting_level == 0
-    assert t.starting_level_index == -1
+    assert t.starting_level is None
+    assert t.starting_level_index is None
     assert t.diagnostic_names == None
     assert t.color == None
     assert t.vertical_coord == None

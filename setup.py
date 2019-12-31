@@ -12,7 +12,7 @@ from setuptools import setup
 
 setup(
     name="hysplitdata",
-    version="0.0.1",
+    version="0.0.2",
     description="HYSPLIT Data Model",
     author="Sonny Zinn",
     author_email="sonny.zinn@noaa.gov",
