@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # ---------------------------------------------------------------------------
 # NOAA Air Resources Laboratory
 #
@@ -10,13 +12,17 @@
 
 from setuptools import setup
 
+meta = {}
+with open("hysplitdata/meta.py") as f:
+    exec(f.read(), meta)
+    
 setup(
     name="hysplitdata",
-    version="0.0.2",
+    version=meta["__version__"],
     description="HYSPLIT Data Model",
-    author="Sonny Zinn",
-    author_email="sonny.zinn@noaa.gov",
+    author=meta["__author__"],
+    author_email=meta["__email__"],
     packages=["hysplitdata", "hysplitdata.traj", "hysplitdata.conc"],
     python_requires="==3.7",
-    install_requires=['numpy==1.16.3', "pytz==2019.1"]
+    install_requires=["numpy==1.16.3", "pytz==2019.1"]
 )
