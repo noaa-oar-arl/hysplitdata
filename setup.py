@@ -15,7 +15,7 @@ from setuptools import setup
 meta = {}
 with open("hysplitdata/meta.py") as f:
     exec(f.read(), meta)
-    
+
 setup(
     name="hysplitdata",
     version=meta["__version__"],

@@ -21,9 +21,14 @@ class FormattedLineReader:
     def parse_format(self, format):
         flist = []
 
-        repeat = 1; type = None; width = None; precision = None
+        repeat = 1
+        type = None
+        width = None
+        precision = None
 
-        state = 0; start = 0; last = -1;
+        state = 0
+        start = 0
+        last = -1
         for k in range(len(format)):
             c = format[k:k+1]
             if state == 0:
@@ -32,7 +37,9 @@ class FormattedLineReader:
                     last = k + 1
                 elif c.isalpha():
                     repeat = int(format[start:last]) if last > start else 1
-                    type = c; start = k + 1; last = -1;
+                    type = c
+                    start = k + 1
+                    last = -1
                     if c == 'X':
                         flist.append([repeat, type])
                     elif c == 'F':
@@ -48,7 +55,9 @@ class FormattedLineReader:
                 elif c == ',' or c == ' ':
                     width = int(format[start:last])
                     flist.append([repeat, type, width])
-                    type = None; start = k + 1; last = -1;
+                    type = None
+                    start = k + 1
+                    last = -1
                     state = 0
             elif state == 2:
                 # looking for float width
@@ -56,7 +65,8 @@ class FormattedLineReader:
                     last = k + 1
                 elif c == '.':
                     width = int(format[start:last])
-                    start = k + 1; last = -1;
+                    start = k + 1
+                    last = -1
                     state = 3
             elif state == 3:
                 # looking for float precision
@@ -65,7 +75,9 @@ class FormattedLineReader:
                 elif c == ',' or c == ' ':
                     precision = int(format[start:last])
                     flist.append([repeat, type, width, precision])
-                    type = None; start = k + 1; last = -1;
+                    type = None
+                    start = k + 1
+                    last = -1
                     state = 0
 
         if state == 1:
@@ -87,9 +99,9 @@ class FormattedLineReader:
 
         flist = self.parse_format(format)
 
-        start = last = 0;
+        start = last = 0
         for fmt in flist:
-            for k in range(fmt[0]): # repetition, e.g., 3 in 3I6
+            for k in range(fmt[0]):  # repetition, e.g., 3 in 3I6
                 c = fmt[1]
                 if c == 'X':
                     start += 1
@@ -140,7 +152,8 @@ class FormattedTextFileReader:
             self.buffer = None
             f.close()
         else:
-            raise Exception("FATAL ERROR - File not found: {0}".format(filename))
+            raise Exception("FATAL ERROR - File not found: {0}"
+                            .format(filename))
 
     def close(self):
         # do nothing as the file is already closed in open().
@@ -162,7 +175,8 @@ class FormattedTextFileReader:
 
     def look_ahead(self, format):
         if self.has_next():
-            return self.formatter.parse(format, self.lines[self.line_index + 1])
+            return self.formatter.parse(format,
+                                        self.lines[self.line_index + 1])
         raise Exception("reached end of line")
 
     def get_current_line(self):

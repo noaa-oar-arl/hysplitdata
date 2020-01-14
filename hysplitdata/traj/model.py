@@ -34,14 +34,16 @@ class TrajectoryDump:
         self.uniq_start_levels = []
 
     def is_forward_calculation(self):
-        return True if self.trajectory_direction.strip() == "FORWARD" else False
+        if self.trajectory_direction.strip() == "FORWARD":
+            return True
+        return False
 
     def has_terrain_profile(self):
         for t in self.trajectories:
             if t.has_terrain_profile():
                 return True
         return False
-    
+
     def get_reader(self):
         """Create and return a reader instance.
 
@@ -57,7 +59,8 @@ class TrajectoryDump:
         return all if len(all) == 0 else list(set(all))
 
     def get_unique_start_levels(self):
-        all = list(filter(lambda x: x is not None, [t.starting_level for t in self.trajectories]))
+        all = list(filter(lambda x: x is not None,
+                          [t.starting_level for t in self.trajectories]))
         if len(all) > 0:
             all = list(set(all))
             all.sort()
@@ -92,7 +95,7 @@ class TrajectoryDump:
                 amax = max(pts) if amax is None else max(amax, max(pts))
 
         return (amin, amax)
-    
+
     def get_datetime_range(self):
         amin = amax = None
         for t in self.trajectories:
@@ -109,31 +112,33 @@ class TrajectoryDump:
             pts = t.forecast_hours
             if len(pts) > 0:
                 amax = max(pts) if amax is None else max(amax, max(pts))
-        
+
         return amax
- 
+
     def get_forecast_init_datetime(self):
         dt = self.trajectories[0].datetimes[0]
         forecast_hour = self.trajectories[0].forecast_hours[0]
         delta = datetime.timedelta(hours=forecast_hour)
         return dt - delta
-           
+
     def fix_vertical_coordinates(self, vert_coord, height_unit):
         for t in self.trajectories:
-            t.vertical_coord = VerticalCoordinateFactory.create_instance(vert_coord, height_unit, t)
+            t.vertical_coord = VerticalCoordinateFactory.create_instance(
+                vert_coord, height_unit, t)
             t.vertical_coord.make_vertical_coordinates()
-                
+
     def fix_start_levels(self):
-        # The starting level needs to be fixed when the terrain height is added.
-        # Or its unit is other than meter.
+        # The starting level needs to be fixed when the terrain height is
+        # added.  Or its unit is other than meter.
         for t in self.trajectories:
             t.repair_starting_level()
-                
+
         # determine the starting level index
         self.uniq_start_levels = self.get_unique_start_levels()
         for t in self.trajectories:
             if t.starting_level in self.uniq_start_levels:
-                t.starting_level_index = self.uniq_start_levels.index(t.starting_level)
+                t.starting_level_index = \
+                    self.uniq_start_levels.index(t.starting_level)
 
     def dump(self, stream):
         stream.write("----- begin TrajectoryDump\n")
@@ -157,8 +162,8 @@ class MeteorologicalGrid:
         self.forecast_hour = 0
 
     def dump(self, stream):
-        stream.write("Grid: model {0}, date {1}, forecast hour {2}\n".format(\
-            self.model, self.datetime, self.forecast_hour))
+        stream.write("Grid: model {0}, date {1}, forecast hour {2}\n"
+                     .format(self.model, self.datetime, self.forecast_hour))
 
 
 class Trajectory:
@@ -168,10 +173,15 @@ class Trajectory:
         self.starting_datetime = None
         self.starting_loc = (0, 0)
         self.starting_level = None
-        self.starting_level_index = None  # determined after all starting_levels are collected
+        # self.starting_level_index is determined after all starting_levels
+        # are collected
+        self.starting_level_index = None
         self.diagnostic_names = None
-        self.color = None               # when settings.color == Color.itemized
-        self.vertical_coord = None      # an AbstractVerticalCoordinate instance
+        # self.color is used when settings.color == Color.itemized
+        self.color = None
+        # an AbstractVerticalCoordinate instance
+        self.vertical_coord = None
+
         # below from data points
         self.grids = []
         self.__datetimes = []
@@ -183,12 +193,17 @@ class Trajectory:
         self.others = dict()
 
     def dump(self, stream):
-        stream.write("Trajectory: date {0}, latlon {1} {2}, starting level {3}\n".format(
-            self.starting_datetime, self.starting_loc[1], self.starting_loc[0], self.starting_level))
+        stream.write("Trajectory: date {0}, latlon {1} {2}, starting "
+                     "level {3}\n".format(
+                        self.starting_datetime,
+                        self.starting_loc[1], self.starting_loc[0],
+                        self.starting_level))
         for k in range(len(self.datetimes)):
-            stream.write("date {4}, age {0}, latlon {1} {2}, height {3}, pressure {5}\n".format(
-                self.ages[k], self.latitudes[k], self.longitudes[k],
-                self.heights[k], self.datetimes[k], self.others["PRESSURE"][k]))
+            stream.write("date {4}, age {0}, latlon {1} {2}, height {3}, "
+                         "pressure {5}\n".format(
+                            self.ages[k], self.latitudes[k],
+                            self.longitudes[k], self.heights[k],
+                            self.datetimes[k], self.others["PRESSURE"][k]))
 
     @property
     def latitudes(self):
@@ -197,7 +212,7 @@ class Trajectory:
     @latitudes.setter
     def latitudes(self, lats):
         self.__latitudes = lats
-         
+
     @property
     def longitudes(self):
         return self.__longitudes
@@ -205,7 +220,7 @@ class Trajectory:
     @longitudes.setter
     def longitudes(self, lons):
         self.__longitudes = lons
-        
+
     @property
     def ages(self):
         return self.__ages
@@ -213,31 +228,31 @@ class Trajectory:
     @ages.setter
     def ages(self, ages):
         self.__ages = ages
-        
+
     @property
     def datetimes(self):
         return self.__datetimes
-        
+
     @datetimes.setter
     def datetimes(self, dts):
         self.__datetimes = dts
-    
+
     @property
     def forecast_hours(self):
         return self.__forecast_hours
-    
+
     @forecast_hours.setter
     def forecast_hours(self, hrs):
         self.__forecast_hours = hrs
-        
+
     @property
     def heights(self):
         return self.__heights
-    
+
     @heights.setter
     def heights(self, h):
         self.__heights = h
-        
+
     @property
     def pressures(self):
         return self.others["PRESSURE"] if "PRESSURE" in self.others else None
@@ -245,7 +260,7 @@ class Trajectory:
     @pressures.setter
     def pressures(self, p):
         self.others["PRESSURE"] = p
-        
+
     @property
     def terrain_profile(self):
         return self.others["TERR_MSL"] if "TERR_MSL" in self.others else None
@@ -253,7 +268,7 @@ class Trajectory:
     @terrain_profile.setter
     def terrain_profile(self, p):
         self.others["TERR_MSL"] = p
-        
+
     @property
     def vertical_coordinates(self):
         return self.vertical_coord.values
@@ -261,24 +276,28 @@ class Trajectory:
     @vertical_coordinates.setter
     def vertical_coordinates(self, vc):
         self.vertical_coord.values = vc
-    
+
     @property
     def trajectory_stddevs(self):
-        return util.myzip(self.others["SIGLON"], self.others["SIGLAT"]) \
-            if ("SIGLAT" in self.others) and ("SIGLON" in self.others) else None
-    
+        if ("SIGLAT" in self.others) and ("SIGLON" in self.others):
+            return util.myzip(self.others["SIGLON"], self.others["SIGLAT"])
+        return None
+
     def has_terrain_profile(self):
         return True if "TERR_MSL" in self.others else False
 
     def has_trajectory_stddevs(self):
-        return True if ("SIGLAT" in self.others) and ("SIGLON" in self.others) else False
-    
+        if ("SIGLAT" in self.others) and ("SIGLON" in self.others):
+            return True
+        return False
+
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
 
     def repair_starting_level(self):
         try:
-            self.starting_level = self.vertical_coord.repair_starting_level(self.starting_level)
+            self.starting_level = \
+                self.vertical_coord.repair_starting_level(self.starting_level)
         except Exception as ex:
             self.starting_level = None
 
@@ -295,10 +314,10 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         self.vertical_coordinate = const.VerticalCoordinate.PRESSURE
         self.height_unit = const.HeightUnit.METERS
         self.utc = pytz.utc
-    
+
     def set_end_hour_duration(self, v):
         self.end_hour_duration = v
-        
+
     def set_vertical_coordinate(self, vc, hu):
         self.vertical_coordinate = vc
         self.height_unit = hu
@@ -313,7 +332,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         self.open(filename)
         self._read_header(pd)
         self.adjust_vertical_coordinate(pd.vertical_motion)
-        
+
         # prepare arrays for diagnostic outputs
         v = self.look_ahead("I6")
         ndiagnostics = v[0]
@@ -337,14 +356,15 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             for k in range(ndiagnostics):
                 fmt += ",F8.1"
         else:
-            fmt = "8I6,F8.1,2F9.3,1X,F8.1" # 1X missing in the FORTRAN code
+            fmt = "8I6,F8.1,2F9.3,1X,F8.1"  # 1X missing in the FORTRAN code
             for k in range(ndiagnostics):
                 fmt += ",1X,F8.1"
 
         firstQ = True
         while self.has_next():
             v = self.parse_line(fmt)
-            if self.end_hour_duration <= 0 or abs(v[8]) <= self.end_hour_duration:
+            if self.end_hour_duration <= 0 \
+                    or abs(v[8]) <= self.end_hour_duration:
                 g = pd.grids[v[1] - 1] if (v[1] > 0) else None
                 t = pd.trajectories[v[0] - 1]
                 if firstQ:
@@ -353,10 +373,12 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                         t.repair_starting_location(pd.trajectories[v[1] - 1])
                     actual = len(v) - 12
                     if actual != ndiagnostics:
-                        logger.error("expected %d diagnostic(s) but found %d in the data file", ndiagnostics, actual)
+                        logger.error("expected %d diagnostic(s) but found %d"
+                                     " in the data file", ndiagnostics, actual)
                 t.grids.append(g)
                 year = util.restore_year(v[2])
-                t.datetimes.append(datetime.datetime(year, v[3], v[4], v[5], v[6], 0, 0, self.utc))
+                t.datetimes.append(datetime.datetime(year, v[3], v[4], v[5],
+                                                     v[6], 0, 0, self.utc))
                 t.forecast_hours.append(v[7])
                 t.ages.append(v[8])
                 t.latitudes.append(v[9])
@@ -368,9 +390,9 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
 
         pd.fix_vertical_coordinates(self.vertical_coordinate, self.height_unit)
         pd.fix_start_levels()
-        
+
         return self.trajectory_data
-                
+
     def adjust_vertical_coordinate(self, vert_motion):
         if self.vertical_coordinate == const.VerticalCoordinate.NOT_SET:
             if vert_motion.startswith("ISOBA"):
@@ -378,12 +400,14 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             elif vert_motion.startswith("THETA"):
                 self.vertical_coordinate = const.VerticalCoordinate.THETA
             else:
-                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
+                self.vertical_coordinate = \
+                    const.VerticalCoordinate.ABOVE_GROUND_LEVEL
         elif self.vertical_coordinate == const.VerticalCoordinate.THETA:
             # if model run does not have theta values
             if not vert_motion.startswith("THETA"):
-                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
-                
+                self.vertical_coordinate = \
+                    const.VerticalCoordinate.ABOVE_GROUND_LEVEL
+
     def _read_header(self, pd):
 
         # number of meteorological grids, trajectory format version
@@ -397,7 +421,8 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             g = MeteorologicalGrid(pd)
             g.model = v[0]
             year = util.restore_year(v[1])
-            g.datetime = datetime.datetime(year, v[2], v[3], v[4], 0, 0, 0, self.utc)
+            g.datetime = datetime.datetime(year, v[2], v[3], v[4],
+                                           0, 0, 0, self.utc)
             g.forecast_hour = v[5]
             pd.grids.append(g)
 
@@ -420,17 +445,18 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             v = self.parse_line(fmt)
             t = Trajectory(pd)
             year = util.restore_year(v[0])
-            t.starting_datetime = datetime.datetime(year, v[1], v[2], v[3], 0, 0, 0, self.utc)
+            t.starting_datetime = datetime.datetime(year, v[1], v[2], v[3],
+                                                    0, 0, 0, self.utc)
             t.starting_loc = (v[5], v[4])
             t.starting_level = v[6]
             pd.trajectories.append(t)
-            
+
 
 class VerticalCoordinateFactory:
-       
+
     @staticmethod
     def create_instance(vert_coord, height_unit, traj):
-        
+
         if vert_coord == const.VerticalCoordinate.PRESSURE:
             return PressureCoordinate(traj)
         elif vert_coord == const.VerticalCoordinate.ABOVE_GROUND_LEVEL:
@@ -442,84 +468,86 @@ class VerticalCoordinateFactory:
             if "THETA" in traj.others:
                 return ThetaCoordinate(traj)
         elif vert_coord == const.VerticalCoordinate.METEO:
-                return OtherVerticalCoordinate(traj)
-        
+            return OtherVerticalCoordinate(traj)
+
         return BlankVerticalCoordinate(traj)
 
-    
+
 class AbstractVerticalCoordinate(ABC):
-    
+
     def __init__(self, traj):
         self.t = traj
         self.values = []
-    
+
     def scale(self, scale_factor):
         self.values = [v*scale_factor for v in self.values]
-    
+
     def need_axis_inversion(self):
         return False
-    
+
     def repair_starting_level(self, v):
         return v
-    
+
     @abstractmethod
     def make_vertical_coordinates(self):
         pass
-    
+
     @abstractmethod
     def get_vertical_label(self):
         pass
-    
-    
+
+
 class BlankVerticalCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj):
         AbstractVerticalCoordinate.__init__(self, traj)
-        
+
     def make_vertical_coordinates(self):
         self.values = numpy.zeros(len(self.t.longitudes))
-        
+
     def get_vertical_label(self):
         return ""
 
-        
+
 class PressureCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj):
         AbstractVerticalCoordinate.__init__(self, traj)
-    
+
     def make_vertical_coordinates(self):
         self.values = self.t.pressures
-    
+
     def get_vertical_label(self):
         return "hPa"
-    
+
     def need_axis_inversion(self):
         return True
-    
-    
+
+
 class TerrainHeightCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj, unit=const.HeightUnit.METERS):
         AbstractVerticalCoordinate.__init__(self, traj)
         self.unit = unit
-        
+
     def make_vertical_coordinates(self):
         self.values = numpy.add(self.t.heights, self.t.terrain_profile)
         if self.unit == const.HeightUnit.FEET:
             self.scale(1.0 / 0.3048)    # meter to feet
-    
+
     def get_vertical_label(self):
-        return "Meters MSL" if self.unit == const.HeightUnit.METERS else "Feet MSL"
-    
+        if self.unit == const.HeightUnit.METERS:
+            return "Meters MSL"
+        return "Feet MSL"
+
     def repair_starting_level(self, v):
         if len(self.values) < 1:
             raise Exception("empty array")
         return self.values[0]
- 
+
 
 class HeightCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj, unit=const.HeightUnit.METERS):
         AbstractVerticalCoordinate.__init__(self, traj)
         self.unit = unit
@@ -528,18 +556,20 @@ class HeightCoordinate(AbstractVerticalCoordinate):
         self.values = self.t.heights
         if self.unit == const.HeightUnit.FEET:
             self.scale(1.0 / 0.3048)    # meter to feet
-     
+
     def get_vertical_label(self):
-        return "Meters AGL" if self.unit == const.HeightUnit.METERS else "Feet AGL"
-       
+        if self.unit == const.HeightUnit.METERS:
+            return "Meters AGL"
+        return "Feet AGL"
+
     def repair_starting_level(self, v):
         if len(self.values) < 1:
             raise Exception("empty array")
         return self.values[0]
- 
-    
+
+
 class ThetaCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj):
         AbstractVerticalCoordinate.__init__(self, traj)
 
@@ -548,15 +578,15 @@ class ThetaCoordinate(AbstractVerticalCoordinate):
 
     def get_vertical_label(self):
         return "Theta"
-    
+
 
 class OtherVerticalCoordinate(AbstractVerticalCoordinate):
-    
+
     def __init__(self, traj):
         AbstractVerticalCoordinate.__init__(self, traj)
-    
+
     def make_vertical_coordinates(self):
         self.values = self.t.others[self.t.diagnostic_names[-1]]
-    
+
     def get_vertical_label(self):
         return self.t.diagnostic_names[-1]
