@@ -377,8 +377,8 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                                      " in the data file", ndiagnostics, actual)
                 t.grids.append(g)
                 year = util.restore_year(v[2])
-                t.datetimes.append(datetime.datetime(year, v[3], v[4], v[5],
-                                                     v[6], 0, 0, self.utc))
+                t.datetimes.append(util.make_datetime(year, v[3], v[4], v[5],
+                                                      v[6], 0, 0, self.utc))
                 t.forecast_hours.append(v[7])
                 t.ages.append(v[8])
                 t.latitudes.append(v[9])
@@ -421,8 +421,8 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             g = MeteorologicalGrid(pd)
             g.model = v[0]
             year = util.restore_year(v[1])
-            g.datetime = datetime.datetime(year, v[2], v[3], v[4],
-                                           0, 0, 0, self.utc)
+            g.datetime = util.make_datetime(year, v[2], v[3], v[4],
+                                            0, 0, 0, self.utc)
             g.forecast_hour = v[5]
             pd.grids.append(g)
 
@@ -445,8 +445,8 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             v = self.parse_line(fmt)
             t = Trajectory(pd)
             year = util.restore_year(v[0])
-            t.starting_datetime = datetime.datetime(year, v[1], v[2], v[3],
-                                                    0, 0, 0, self.utc)
+            t.starting_datetime = util.make_datetime(year, v[1], v[2], v[3],
+                                                     0, 0, 0, self.utc)
             t.starting_loc = (v[5], v[4])
             t.starting_level = v[6]
             pd.trajectories.append(t)

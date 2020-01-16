@@ -232,8 +232,8 @@ def test_ConcentrationDumpFileReader___init__():
     
     assert r.conc_dump is m
     assert r.utc is pytz.utc
-    
-    
+
+
 def test_ConcentrationDumpFileReader_read():
     m = model.ConcentrationDump()
     r = model.ConcentrationDumpFileReader(m)

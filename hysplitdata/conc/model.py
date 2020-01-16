@@ -8,7 +8,6 @@
 # ---------------------------------------------------------------------------
 
 import copy
-import datetime
 import logging
 import numpy
 import struct
@@ -203,7 +202,7 @@ class ConcentrationDumpFileReader:
             cur += 36
             cdump.meteo_model = v[0].decode(str_code)
             year = util.restore_year(v[1])
-            cdump.meteo_starting_datetime = datetime.datetime(
+            cdump.meteo_starting_datetime = util.make_datetime(
                 year, v[2], v[3], v[4], 0, 0, 0, self.utc)
             cdump.meteo_forecast_hour = v[5]
             logger.debug("starting location count %d", v[6])
@@ -216,7 +215,7 @@ class ConcentrationDumpFileReader:
                 v = struct.unpack_from('>iiiifffi', buff, cur)
                 cur += 36
                 year = util.restore_year(v[0])
-                cdump.release_datetimes.append(datetime.datetime(
+                cdump.release_datetimes.append(util.make_datetime(
                     year, v[1], v[2], v[3], v[7], 0, 0, self.utc))
                 cdump.release_locs.append((v[5], v[4]))
                 cdump.release_heights.append(v[6])
@@ -267,16 +266,16 @@ class ConcentrationDumpFileReader:
                 v = struct.unpack_from('>iiiiii', buff, cur)
                 cur += 28
                 year = util.restore_year(v[0])
-                sample_start_time = datetime.datetime(year, v[1], v[2], v[3],
-                                                      v[4], 0, 0, self.utc)
+                sample_start_time = util.make_datetime(year, v[1], v[2], v[3],
+                                                       v[4], 0, 0, self.utc)
                 sample_start_forecast = v[5]
 
                 cur += 4
                 v = struct.unpack_from('>iiiiii', buff, cur)
                 cur += 28
                 year = util.restore_year(v[0])
-                sample_end_time = datetime.datetime(year, v[1], v[2], v[3],
-                                                    v[4], 0, 0, self.utc)
+                sample_end_time = util.make_datetime(year, v[1], v[2], v[3],
+                                                     v[4], 0, 0, self.utc)
                 sample_end_forecast = v[5]
 
                 for p_idx in range(pollutant_count):
