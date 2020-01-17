@@ -294,7 +294,13 @@ class ConcentrationDumpFileReader:
                         cur += 8
                         g.pollutant = v[0].decode(str_code)
                         g.vert_level = v[1]
-                        g.pollutant_index = pollutant_dict[g.pollutant]
+                        if g.pollutant in pollutant_dict:
+                            g.pollutant_index = pollutant_dict[g.pollutant]
+                        else:
+                            logger.error("undeclared pollutant %s; assuming it to be %s",
+                                         g.pollutant, cdump.pollutants[0])
+                            # 17 JAN 2020 - workaround
+                            g.pollutant_index = 0
                         g.vert_level_index = level_dict[v[1]]
                         logger.debug("grid for pollutant %s, height %d",
                                      g.pollutant, g.vert_level)
