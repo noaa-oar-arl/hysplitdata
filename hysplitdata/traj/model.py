@@ -365,7 +365,11 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             v = self.parse_line(fmt)
             if self.end_hour_duration <= 0 \
                     or abs(v[8]) <= self.end_hour_duration:
-                g = pd.grids[v[1] - 1] if (v[1] > 0) else None
+                try:
+                    g = pd.grids[v[1] - 1]
+                except Exception as ex:
+                    logger.error("invalid meteorological grid number %d", v[1])
+                    g = None
                 t = pd.trajectories[v[0] - 1]
                 if firstQ:
                     firstQ = False
