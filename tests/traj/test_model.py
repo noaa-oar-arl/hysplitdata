@@ -246,10 +246,11 @@ def test_TrajectoryDump_fix_start_datetimes():
 
     t = model.Trajectory()
     t.starting_level = 10.0
-    t.starting_datetime = None
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
     t.longitudes = [0]
     t.latitues = [0]
     t.pressures = [700.0]
+    # note the minute field is different.
     t.datetimes = [datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)]
     d.trajectories.append(t)
 
@@ -492,7 +493,8 @@ def test_Trajectory_has_trajectory_stddevs(plotData):
 
 def test_Trajectory_repair_starting_datetime():
     t = model.Trajectory()
-    t.starting_datetime = None
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
+    # note the minute field is different.
     t.datetimes = [datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)]
     t.longitudes = [0, 1, 2, 3]
     t.latitudes = [1, 2, 3, 4]
