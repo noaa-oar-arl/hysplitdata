@@ -121,6 +121,10 @@ class TrajectoryDump:
         delta = datetime.timedelta(hours=forecast_hour)
         return dt - delta
 
+    def fix_start_datetimes(self):
+        for t in self.trajectories:
+            t.repair_starting_datetime()
+
     def fix_vertical_coordinates(self, vert_coord, height_unit):
         for t in self.trajectories:
             t.vertical_coord = VerticalCoordinateFactory.create_instance(
@@ -291,6 +295,10 @@ class Trajectory:
             return True
         return False
 
+    def repair_starting_datetime(self):
+        if len(self.__datetimes) > 0:
+            self.starting_datetime = self.__datetimes[0]
+
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
 
@@ -392,6 +400,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                     if 12 + k < len(v):
                         t.others[diagnostic[k]].append(v[12 + k])
 
+        pd.fix_start_datetimes()
         pd.fix_vertical_coordinates(self.vertical_coordinate, self.height_unit)
         pd.fix_start_levels()
 

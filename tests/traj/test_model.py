@@ -241,6 +241,24 @@ def test_TrajectoryDump_get_forecast_init_datetime(plotData):
     assert r == datetime.datetime(1995, 10, 16,  0, 0, 0, 0, utc)
 
 
+def test_TrajectoryDump_fix_start_datetimes():
+    d = model.TrajectoryDump()
+
+    t = model.Trajectory()
+    t.starting_level = 10.0
+    t.starting_datetime = None
+    t.longitudes = [0]
+    t.latitues = [0]
+    t.pressures = [700.0]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)]
+    d.trajectories.append(t)
+
+    # Run and check
+    d.fix_start_datetimes()
+
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)
+
+
 def test_TrajectoryDump_fix_vertical_coordinates():
     d = model.TrajectoryDump()
 
@@ -470,7 +488,20 @@ def test_Trajectory_has_trajectory_stddevs(plotData):
     t.others["SIGLON"] = [0.2, 0.3]
     
     assert t.has_trajectory_stddevs() == True
+
+
+def test_Trajectory_repair_starting_datetime():
+    t = model.Trajectory()
+    t.starting_datetime = None
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)]
+    t.longitudes = [0, 1, 2, 3]
+    t.latitudes = [1, 2, 3, 4]
+    t.starting_loc = (0, 0)
     
+    t.repair_starting_datetime()
+    
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)
+
 
 def test_Trajectory_repair_starting_location():
     t = model.Trajectory()
@@ -532,7 +563,7 @@ def test_TrajectoryDumpFileReader_read():
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
     utc = pytz.utc
-    
+
     o = r.read("data/tdump")
     vertical_coordinate = r.vertical_coordinate
     assert isinstance(o, model.TrajectoryDump)
