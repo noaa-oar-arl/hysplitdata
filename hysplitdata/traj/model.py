@@ -297,7 +297,7 @@ class Trajectory:
 
     def repair_starting_datetime(self):
         if len(self.__datetimes) > 0:
-            self.starting_datetime = self.starting_datetime.replace(minute=self.__datetimes[-1].minute)
+            self.starting_datetime = self.__datetimes[0]
 
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
