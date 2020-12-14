@@ -219,6 +219,10 @@ class ConcentrationDumpFileReader:
                     year, v[1], v[2], v[3], v[7], 0, 0, self.utc))
                 cdump.release_locs.append((v[5], v[4]))
                 cdump.release_heights.append(v[6])
+                logger.debug('release {}: date {}, loc ({:.4f}, {:.4f}), height {}'.format(
+                             k, cdump.release_datetimes[-1].strftime('%Y-%m-%d %H:%M'),
+                             cdump.release_locs[-1][0], cdump.release_locs[-1][1],
+                             cdump.release_heights[-1]))
 
             cur += 4
             v = struct.unpack_from('>iiffff', buff, cur)
