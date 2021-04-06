@@ -369,6 +369,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                 fmt += ",1X,F8.1"
 
         firstQ = True
+        gridNumberExceptionCount = 0
         while self.has_next():
             v = self.parse_line(fmt)
             if self.end_hour_duration <= 0 \
@@ -376,8 +377,12 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                 try:
                     g = pd.grids[v[1] - 1]
                 except Exception as ex:
-                    logger.error("invalid meteorological grid number %d", v[1])
+                    if gridNumberExceptionCount == 1:
+                        logger.warning("invalid meteorological grid number %d:"
+                                       " this message will not be repeated for"
+                                       " the current file", v[1])
                     g = None
+                    gridNumberExceptionCount += 1
                 t = pd.trajectories[v[0] - 1]
                 if firstQ:
                     firstQ = False
