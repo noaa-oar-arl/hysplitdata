@@ -24,5 +24,5 @@ setup(
     author_email=meta["__email__"],
     packages=["hysplitdata", "hysplitdata.traj", "hysplitdata.conc"],
     python_requires="==3.7",
-    install_requires=["numpy==1.19.2", "pytz==2020.4"]
+    install_requires=["numpy==1.20.1", "pytz==2021.1"]
 )
