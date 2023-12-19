@@ -54,7 +54,7 @@ def test_TrajectoryDump___init__():
     assert d.IDLBL == None
     assert d.grids != None and len(d.grids) == 0
     assert d.trajectories != None and len(d.trajectories) == 0
-    assert d.format_version == 1
+    assert d.format_version == 2
     assert d.uniq_start_levels != None and len(d.uniq_start_levels) == 0
 
 
@@ -201,7 +201,7 @@ def test_TrajectoryDump_get_unique_start_levels():
 def test_TrajectoryDump_get_latitude_range(plotData):
     r = plotData.get_latitude_range()
 
-    assert r[0] == 36.886
+    assert r[0] == 36.887
     assert r[1] == 40.000
 
 
@@ -209,7 +209,7 @@ def test_TrajectoryDump_get_longitude_range(plotData):
     r = plotData.get_longitude_range()
 
     assert r[0] == -90.000
-    assert r[1] == -85.285
+    assert r[1] == -85.300
 
 
 def test_TrajectoryDump_get_age_range(plotData):
@@ -358,7 +358,7 @@ def test_Trajectory_latitudes(plotData):
     lats = plotData.trajectories[0].latitudes
     assert len(lats) == 13
     assert lats[0] == 40.0
-    assert lats[12] == 38.586
+    assert lats[12] == 38.585
     
     plotData.trajectories[0].latitudes = []
 
@@ -367,7 +367,7 @@ def test_Trajectory_longitudes(plotData):
     lons = plotData.trajectories[0].longitudes
     assert len(lons) == 13
     assert lons[0] == -90.0
-    assert lons[12] == -88.772
+    assert lons[12] == -88.773
 
     plotData.trajectories[0].longitudes = []
 
@@ -412,8 +412,8 @@ def test_Trajectory_heights(plotData):
 def test_Trajectory_pressures(plotData):
     p = plotData.trajectories[0].pressures
     assert len(p) == 13
-    assert p[0] == 991.7
-    assert p[12] == 1001.1
+    assert p[0] == 991.66
+    assert p[12] == 1001.14
 
     plotData.trajectories[0].pressures = []
     
@@ -570,7 +570,111 @@ def test_TrajectoryDumpFileReader_read():
     vertical_coordinate = r.vertical_coordinate
     assert isinstance(o, model.TrajectoryDump)
 
-    assert d.format_version == 1
+    assert d.format_version == 2
+    assert d.IDLBL == None
+
+    assert len(d.grids) == 1
+    g = d.grids[0]
+    assert g.parent is d
+    assert g.model == "    NGM "
+    assert g.datetime == datetime.datetime(1995, 10, 16, 0, 0, 0, 0, utc)
+    assert g.forecast_hour == 0
+
+    assert len(d.trajectories) == 3
+    assert d.trajectory_direction == "FORWARD "
+    assert d.vertical_motion == "OMEGA   "
+
+    assert d.uniq_start_levels == [10.0, 500.0, 1000.0]
+
+    t = d.trajectories[0]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(1995, 10, 16, 0, 0, 0, 0, utc)
+    assert t.starting_loc == (-90.0, 40.0)
+    assert t.starting_level == 10.0
+    assert t.starting_level_index == 0
+    assert len(t.diagnostic_names) == 3
+    assert t.diagnostic_names[0] == "PRESSURE"
+    assert t.diagnostic_names[1] == "UWIND"
+    assert t.diagnostic_names[2] == "VWIND"
+
+    t = d.trajectories[1]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(1995, 10, 16, 0, 0, 0, 0, utc)
+    assert t.starting_loc == (-90.0, 40.0)
+    assert t.starting_level == 500.0
+    assert t.starting_level_index == 1
+    assert len(t.diagnostic_names) == 3
+    assert t.diagnostic_names[0] == "PRESSURE"
+    assert t.diagnostic_names[1] == "UWIND"
+    assert t.diagnostic_names[2] == "VWIND"
+
+    t = d.trajectories[2]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(1995, 10, 16, 0, 0, 0, 0, utc)
+    assert t.starting_loc == (-90.0, 40.0)
+    assert t.starting_level == 1000.0
+    assert t.starting_level_index == 2
+    assert len(t.diagnostic_names) == 3
+    assert t.diagnostic_names[0] == "PRESSURE"
+    assert t.diagnostic_names[1] == "UWIND"
+    assert t.diagnostic_names[2] == "VWIND"
+
+    t = d.trajectories[0]
+    assert len(t.grids) == 13
+    assert len(t.datetimes) == 13
+    assert len(t.forecast_hours) == 13
+    assert len(t.ages) == 13
+    assert len(t.latitudes) == 13
+    assert len(t.longitudes) == 13
+    assert len(t.heights) == 13
+    assert len(t.vertical_coordinates) == 13
+    assert len(t.others["PRESSURE"]) == 13
+
+    k = 12
+    assert t.grids[k] is d.grids[0]
+    assert t.datetimes[k] == datetime.datetime(1995, 10, 16, 12, 0, 0, 0, utc)
+    assert t.forecast_hours[k] == 0
+    assert t.ages[k] == 12.0
+    assert t.latitudes[k] == 38.585
+    assert t.longitudes[k] == -88.773
+    assert t.heights[k] == 0.0
+    assert t.vertical_coordinates[k] == 0.0
+    assert t.others["PRESSURE"][k] == 1001.14
+
+    t = d.trajectories[2]
+    assert len(t.grids) == 13
+    assert len(t.datetimes) == 13
+    assert len(t.forecast_hours) == 13
+    assert len(t.ages) == 13
+    assert len(t.latitudes) == 13
+    assert len(t.longitudes) == 13
+    assert len(t.heights) == 13
+    assert len(t.vertical_coordinates) == 13
+    assert len(t.others["PRESSURE"]) == 13
+
+    k = 12
+    assert t.grids[k] is d.grids[0]
+    assert t.datetimes[k] == datetime.datetime(1995, 10, 16, 12, 0, 0, 0, utc)
+    assert t.forecast_hours[k] == 0
+    assert t.ages[k] == 12.0
+    assert t.latitudes[k] == 36.887
+    assert t.longitudes[k] == -85.300
+    assert t.heights[k] == 718.93
+    assert t.vertical_coordinates[k] == 718.93
+    assert t.others["PRESSURE"][k] == 905.91
+
+
+def test_TrajectoryDumpFileReader_read_fmt0():
+    d = model.TrajectoryDump()
+    r = model.TrajectoryDumpFileReader(d)
+    r.set_end_hour_duration(0)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
+    utc = pytz.utc
+    
+    r.read("data/tdump_fmt0")
+    vertical_coordinate = r.vertical_coordinate
+    
+    assert d.format_version == 0
     assert d.IDLBL == None
 
     assert len(d.grids) == 1
@@ -658,17 +762,17 @@ def test_TrajectoryDumpFileReader_read():
     assert t.others["PRESSURE"][k] == 905.6
 
 
-def test_TrajectoryDumpFileReader_read_fmt0():
+def test_TrajectoryDumpFileReader_read_fmt1():
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
     utc = pytz.utc
     
-    r.read("data/tdump_fmt0")
+    r.read("data/tdump_fmt1")
     vertical_coordinate = r.vertical_coordinate
     
-    assert d.format_version == 0
+    assert d.format_version == 1
     assert d.IDLBL == None
 
     assert len(d.grids) == 1

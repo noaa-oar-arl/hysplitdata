@@ -30,7 +30,7 @@ class TrajectoryDump:
         self.IDLBL = None   # identifier label: MERGMEAN, MERGLIST
         self.grids = []
         self.trajectories = []
-        self.format_version = 1
+        self.format_version = 2
         self.uniq_start_levels = []
 
     def is_forward_calculation(self):
@@ -347,7 +347,10 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
 
         fmt = "I6"
         for k in range(ndiagnostics):
-            fmt += ",A8" if pd.format_version == 0 else ",1X,A8"
+            if pd.format_version == 0:
+                fmt += ",A8"
+            else:
+                fmt += ",1X,A8"
 
         diagnostic = []
         v = self.parse_line(fmt)
@@ -363,10 +366,14 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             fmt = "8I6,F8.1,2F8.3,F8.1"
             for k in range(ndiagnostics):
                 fmt += ",F8.1"
-        else:
+        elif pd.format_version == 1:
             fmt = "8I6,F8.1,2F9.3,1X,F8.1"  # 1X missing in the FORTRAN code
             for k in range(ndiagnostics):
                 fmt += ",1X,F8.1"
+        elif pd.format_version == 2:
+            fmt = "8I6,F8.2,2F9.3,1X,F9.2"  # more digits below the decimal point
+            for k in range(ndiagnostics):
+                fmt += ",1X,F9.2"
 
         firstQ = True
         gridNumberExceptionCount = 0
@@ -432,6 +439,8 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         v = self.parse_line("2I6")
         ngrid = v[0]
         pd.format_version = 0 if len(v) == 1 else v[1]
+        if pd.format_version < 0 or pd.format_version > 2:
+            raise Exception("Unknown trajectory dump format {}".format(pd.format_version))
 
         # meteorological grids
         for k in range(ngrid):
@@ -451,6 +460,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             pd.trajectory_direction = v[1]
             pd.vertical_motion = v[2]
         else:
+            # format versions 1 and 2
             v = self.parse_line("I6,1X,A8,1X,A8,1X,A8")
             ntraj = v[0]
             pd.trajectory_direction = v[1]
@@ -458,7 +468,13 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             pd.IDLBL = v[3] if len(v) >= 4 else None
 
         # trajectory starting points
-        fmt = "4I6,2F8.3,F8.1" if pd.format_version == 0 else "4I6,2F9.3,F8.1"
+        if pd.format_version == 0:
+            fmt = "4I6,2F8.3,F8.1"
+        elif pd.format_version == 1:
+            fmt = "4I6,2F9.3,F8.1"
+        elif pd.format_version == 2:
+            fmt = "4I6,2F9.3,1X,F9.2"
+
         for k in range(ntraj):
             v = self.parse_line(fmt)
             t = Trajectory(pd)

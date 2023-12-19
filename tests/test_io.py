@@ -131,7 +131,7 @@ def test_FormattedTextFileReader_open():
 
 def test_FormattedTextFileReader_close():
     r = io.FormattedTextFileReader()
-    r.open("data/tdump")
+    r.open("data/tdump_fmt1")
     r.close()   # just check if close() is declared.
 
 
@@ -168,7 +168,7 @@ def test_FormattedTextFileReader_has_next():
 
 def test_FormattedTextFileReader_parse_line():
     r = io.FormattedTextFileReader()
-    r.open("data/tdump")
+    r.open("data/tdump_fmt1")
 
     r.fetch_line()
     v = r.parse_line("A8,5I6")
@@ -184,7 +184,7 @@ def test_FormattedTextFileReader_parse_line():
 
 def test_FormattedTextFileReader_look_ahead():
     r = io.FormattedTextFileReader()
-    r.open("data/tdump")
+    r.open("data/tdump_fmt1")
 
     r.fetch_line()
     v = r.look_ahead("A8,5I6")
@@ -208,7 +208,7 @@ def test_FormattedTextFileReader_look_ahead():
 
 def test_FormattedTextFileReader_get_current_line():
     r = io.FormattedTextFileReader()
-    r.open("data/tdump")
+    r.open("data/tdump_fmt1")
 
     r.fetch_line()
     assert r.get_current_line() ==  "     1     1"
