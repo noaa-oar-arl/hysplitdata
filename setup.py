@@ -19,7 +19,8 @@ setup(
     description="HYSPLIT Data Model",
     author=meta.__author__,
     author_email=meta.__email__,
-    packages=["hysplitdata", "hysplitdata.traj", "hysplitdata.conc"],
+    packages=["hysplitdata", "hysplitdata.traj", "hysplitdata.conc",
+              "hysplitdata.meteo"],
     python_requires="==3.7",
     install_requires=["numpy==1.20.1", "pytz==2021.1"]
 )
