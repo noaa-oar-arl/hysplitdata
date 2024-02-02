@@ -27,12 +27,12 @@ No error should have occurred. There may be warning messages but they may be ign
 
 To read a trajectory dump file, say, tdump.20190712, in a Python script:
 
-    import hysplitdata.traj.model
+    import hysplitdata
     ...
-    tdump = hysplitdata.traj.model.TrajectoryDump().get_reader().read("tdump.20190712")
+    tdump = hysplitdata.read_tdump("tdump.20190712")
 
 Reading a concentration dump file is done in a similar manner:
 
-    import hysplitdata.conc.model
+    import hysplitdata
     ...
-    cdump = hysplitdata.conc.model.ConcentrationDump().get_reader().read("cdump.20190712")
+    cdump = hysplitdata.read_cdump("cdump.20190712")

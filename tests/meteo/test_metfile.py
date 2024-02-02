@@ -176,8 +176,8 @@ def test_ArchiveFile_compare_priority():
 
 
 def test_get_met_file():
-   o = get_met_file('../data/oct1618.BIN')
-   assert o.pathname == '../data/oct1618.BIN'
+   o = get_met_file('data/oct1618.BIN')
+   assert o.pathname == 'data/oct1618.BIN'
    assert o.start_datetime == datetime(1995,10,16,0,0,0,tzinfo=utc)
    assert o.ending_datetime == datetime(1995,10,18,22,0,0,tzinfo=utc)
    assert o.time_step == 120
