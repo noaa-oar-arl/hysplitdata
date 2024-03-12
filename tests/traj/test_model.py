@@ -246,12 +246,13 @@ def test_TrajectoryDump_fix_start_datetimes():
 
     t = model.Trajectory()
     t.starting_level = 10.0
-    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)
     t.longitudes = [0]
     t.latitues = [0]
     t.pressures = [700.0]
+    t.ages = [0.]
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)]
     d.trajectories.append(t)
 
     # Run and check
@@ -313,6 +314,30 @@ def test_TrajectoryDump_fix_start_levels():
     assert d.trajectories[1].starting_level_index == 1
     assert d.trajectories[2].starting_level_index == 2
     assert d.trajectories[3].starting_level_index == 1
+
+
+def test_TrajectoryDump_case1():
+    utc = pytz.utc
+    d = model.TrajectoryDump()
+    r = model.TrajectoryDumpFileReader(d)
+    r.read("data/tdump_multi")
+    
+    assert len(d.trajectories) == 5
+    
+    t = d.trajectories[0]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,16,0,0,0,utc)
+
+    t = d.trajectories[1]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,17,0,0,0,utc)
+    
+    t = d.trajectories[2]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,18,0,0,0,utc)
+    
+    t = d.trajectories[3]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,19,0,0,0,utc)
+    
+    t = d.trajectories[4]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,20,0,0,0,utc)
 
 
 def test_MeteorologicalGrid___init__():
@@ -493,11 +518,12 @@ def test_Trajectory_has_trajectory_stddevs(plotData):
 
 def test_Trajectory_repair_starting_datetime():
     t = model.Trajectory()
-    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)]
     t.longitudes = [0, 1, 2, 3]
     t.latitudes = [1, 2, 3, 4]
+    t.ages = [0., 1., 2., 3.]
     t.starting_loc = (0, 0)
     
     t.repair_starting_datetime()
