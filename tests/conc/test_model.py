@@ -8,6 +8,7 @@
 
 import datetime
 import numpy
+import os
 import pytest
 import pytz
 from hysplitdata import util
@@ -46,6 +47,14 @@ def test_ConcentrationDump_get_reader():
     
     assert isinstance(r, model.ConcentrationDumpFileReader)
     assert r.conc_dump is m
+    
+    
+def test_ConcentrationDump_get_writer():
+    m = model.ConcentrationDump()
+    w = m.get_writer()
+    
+    assert isinstance(w, model.ConcentrationDumpFileWriter)
+    assert w.conc_dump is m
     
     
 def test_ConcentrationDump_get_unique_start_locations():
@@ -331,3 +340,118 @@ def test_ConcentrationDumpFileReader_read():
     assert g.vert_level_index == 1
     assert g.conc.shape == (601, 601)
     assert g.conc[300, 300] * 1.e+13 == pytest.approx(7.608168)    
+
+    
+
+def test_ConcentrationDumpFileWriter___init__():
+    m = model.ConcentrationDump()
+    w = model.ConcentrationDumpFileWriter(m)
+    
+    assert w.conc_dump is m
+    assert w.utc is pytz.utc
+    assert w.cpack == 1
+
+
+def test_ConcentrationDumpFileWriter_write(cdump):
+    w = cdump.get_writer()
+    w.write("cdump_writer_test")
+    
+    m = model.ConcentrationDump()
+    r = model.ConcentrationDumpFileReader(m)
+    utc = pytz.utc
+    
+    r.read("cdump_writer_test")
+    
+    assert m.meteo_model == "NARR"
+    assert m.meteo_starting_datetime == datetime.datetime(1983, 9, 25, 15, 0, 0, 0, utc)
+    assert m.meteo_forecast_hour == 0.0
+    
+    assert len(m.release_datetimes) == 2
+    assert len(m.release_locs) == 2
+    assert len(m.release_heights) == 2
+    assert m.release_datetimes[0]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert m.release_datetimes[1]== datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert m.release_locs[0] == pytest.approx((-84.22, 39.90))
+    assert m.release_locs[1] == pytest.approx((-84.22, 39.90))
+    assert m.release_heights[0] == pytest.approx( 10.0)
+    assert m.release_heights[1] == pytest.approx(500.0)
+    
+    assert m.grid_sz == (601, 601)
+    assert m.grid_deltas == pytest.approx((0.05, 0.05))
+    assert m.grid_loc == pytest.approx((-99.22, 24.90))
+    assert len(m.longitudes) == 601
+    assert len(m.latitudes) == 601
+    assert m.longitudes[0] == pytest.approx(-99.22)
+    assert m.latitudes[0] == pytest.approx(24.90)
+
+    assert m.vert_levels == pytest.approx((100, 300))
+    assert m.pollutants == ["TEST", "MORE"]
+    
+    assert len(m.grids) == 4
+    
+    # grid 0
+    
+    g = m.grids[0]
+    assert g.time_index == 0
+    assert g.starting_datetime == datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
+    assert g.starting_forecast_hr == 0
+    assert g.ending_forecast_hr == 0
+    
+    assert g.pollutant == "TEST"
+    assert g.vert_level == 100
+    assert g.pollutant_index == 0
+    assert g.vert_level_index == 0
+    assert g.conc.shape == (601, 601)
+    assert g.conc[300, 300] * 1.e+13 == pytest.approx(8.047535)
+    
+    # grid 1
+    
+    g = m.grids[1]
+    assert g.time_index == 0
+    assert g.starting_datetime == datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
+    assert g.starting_forecast_hr == 0
+    assert g.ending_forecast_hr == 0
+    
+    assert g.pollutant == "TEST"
+    assert g.vert_level == 300
+    assert g.pollutant_index == 0
+    assert g.vert_level_index == 1
+    assert g.conc.shape == (601, 601)
+    assert g.conc[300, 300] * 1.e+13 == pytest.approx(7.963810)
+
+    # grid 2
+    
+    g = m.grids[2]
+    assert g.time_index == 0
+    assert g.starting_datetime == datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
+    assert g.starting_forecast_hr == 0
+    assert g.ending_forecast_hr == 0
+    
+    assert g.pollutant == "MORE"
+    assert g.vert_level == 100
+    assert g.pollutant_index == 1
+    assert g.vert_level_index == 0
+    assert g.conc.shape == (601, 601)
+    assert g.conc[300, 300] * 1.e+13 == pytest.approx(8.173024)  
+    
+    # grid 3
+    
+    g = m.grids[3]
+    assert g.time_index == 0
+    assert g.starting_datetime == datetime.datetime(1983, 9, 25, 17, 0, 0, 0, utc)
+    assert g.ending_datetime == datetime.datetime(1983, 9, 26, 5, 0, 0, 0, utc)
+    assert g.starting_forecast_hr == 0
+    assert g.ending_forecast_hr == 0
+    
+    assert g.pollutant == "MORE"
+    assert g.vert_level == 300
+    assert g.pollutant_index == 1
+    assert g.vert_level_index == 1
+    assert g.conc.shape == (601, 601)
+    assert g.conc[300, 300] * 1.e+13 == pytest.approx(7.608168)
+
+    os.remove("cdump_writer_test")
+
