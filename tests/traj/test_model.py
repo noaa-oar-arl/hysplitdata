@@ -250,14 +250,15 @@ def test_TrajectoryDump_fix_start_datetimes():
     t.longitudes = [0]
     t.latitues = [0]
     t.pressures = [700.0]
+    t.ages = [0.]
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)]
     d.trajectories.append(t)
 
     # Run and check
     d.fix_start_datetimes()
 
-    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 6, 0, 0, pytz.utc)
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)
 
 
 def test_TrajectoryDump_fix_vertical_coordinates():
@@ -313,6 +314,30 @@ def test_TrajectoryDump_fix_start_levels():
     assert d.trajectories[1].starting_level_index == 1
     assert d.trajectories[2].starting_level_index == 2
     assert d.trajectories[3].starting_level_index == 1
+
+
+def test_TrajectoryDump_case1():
+    utc = pytz.utc
+    d = model.TrajectoryDump()
+    r = model.TrajectoryDumpFileReader(d)
+    r.read("data/tdump_multi")
+    
+    assert len(d.trajectories) == 5
+    
+    t = d.trajectories[0]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,16,0,0,0,utc)
+
+    t = d.trajectories[1]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,17,0,0,0,utc)
+    
+    t = d.trajectories[2]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,18,0,0,0,utc)
+    
+    t = d.trajectories[3]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,19,0,0,0,utc)
+    
+    t = d.trajectories[4]
+    assert t.starting_datetime == datetime.datetime(2023,8,22,20,0,0,0,utc)
 
 
 def test_MeteorologicalGrid___init__():
@@ -495,14 +520,15 @@ def test_Trajectory_repair_starting_datetime():
     t = model.Trajectory()
     t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)]
     t.longitudes = [0, 1, 2, 3]
     t.latitudes = [1, 2, 3, 4]
+    t.ages = [0., 1., 2., 3.]
     t.starting_loc = (0, 0)
     
     t.repair_starting_datetime()
     
-    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 8, 0, 0, pytz.utc)
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)
 
 
 def test_Trajectory_repair_starting_location():
@@ -662,6 +688,92 @@ def test_TrajectoryDumpFileReader_read():
     assert t.heights[k] == 718.93
     assert t.vertical_coordinates[k] == 718.93
     assert t.others["PRESSURE"][k] == 905.91
+
+
+def test_TrajectoryDumpFileReader_read_backward():
+    d = model.TrajectoryDump()
+    r = model.TrajectoryDumpFileReader(d)
+    r.set_end_hour_duration(0)
+    r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
+    utc = pytz.utc
+
+    o = r.read("data/tdump_bwd")
+    vertical_coordinate = r.vertical_coordinate
+    assert isinstance(o, model.TrajectoryDump)
+
+    assert d.format_version == 1
+    assert d.IDLBL == None
+
+    assert len(d.grids) == 4
+    g = d.grids[0]
+    assert g.parent is d
+    assert g.model == "    HRRR"
+    assert g.datetime == datetime.datetime(2024, 4, 2, 14, 0, 0, 0, utc)
+    assert g.forecast_hour == 1
+
+    assert len(d.trajectories) == 3
+    assert d.trajectory_direction == "BACKWARD"
+    assert d.vertical_motion == "OMEGA   "
+
+    assert d.uniq_start_levels == [500.0]
+
+    t = d.trajectories[0]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(2024, 4, 3, 2, 30, 0, 0, utc)
+    assert t.starting_loc == pytest.approx((-98.086, 38.610))
+    assert t.starting_level == 500.0
+    assert t.starting_level_index == 0
+    assert len(t.diagnostic_names) == 1
+    assert t.diagnostic_names[0] == "PRESSURE"
+
+    t = d.trajectories[1]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(2024, 4, 3, 2, 30, 0, 0, utc)
+    assert t.starting_loc == pytest.approx((-98.086, 38.630))
+    assert t.starting_level == 500.0
+    assert t.starting_level_index == 0
+    assert len(t.diagnostic_names) == 1
+    assert t.diagnostic_names[0] == "PRESSURE"
+
+    t = d.trajectories[2]
+    assert t.parent is d
+    assert t.starting_datetime == datetime.datetime(2024, 4, 3, 2, 30, 0, 0, utc)
+    assert t.starting_loc == pytest.approx((-98.086, 38.650))
+    assert t.starting_level == 500.0
+    assert t.starting_level_index == 0
+    assert len(t.diagnostic_names) == 1
+    assert t.diagnostic_names[0] == "PRESSURE"
+
+    t = d.trajectories[0]
+    assert len(t.grids) == 7
+    assert len(t.datetimes) == 7
+    assert len(t.forecast_hours) == 7
+    assert len(t.ages) == 7
+    assert len(t.latitudes) == 7
+    assert len(t.longitudes) == 7
+    assert len(t.heights) == 7
+    assert len(t.vertical_coordinates) == 7
+    assert len(t.others["PRESSURE"]) == 7
+
+    k = 0
+    assert t.grids[k] is d.grids[0]
+    assert t.datetimes[k] == datetime.datetime(2024, 4, 3, 2, 30, 0, 0, utc)
+    assert t.forecast_hours[k] == 12
+    assert t.ages[k] == 0.0
+    assert t.latitudes[k] == 38.610
+    assert t.longitudes[k] == -98.086
+    assert t.heights[k] == 500.0
+    assert t.others["PRESSURE"][k] == 900.1
+
+    k = 6
+    assert t.grids[k] is d.grids[0]
+    assert t.datetimes[k] == datetime.datetime(2024, 4, 3, 2, 0, 0, 0, utc)
+    assert t.forecast_hours[k] == 12
+    assert t.ages[k] == -0.5
+    assert t.latitudes[k] == 38.863
+    assert t.longitudes[k] == -98.124
+    assert t.heights[k] == 525.4
+    assert t.others["PRESSURE"][k] == 895.4
 
 
 def test_TrajectoryDumpFileReader_read_fmt0():

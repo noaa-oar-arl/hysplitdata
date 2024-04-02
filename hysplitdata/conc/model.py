@@ -8,6 +8,7 @@
 # ---------------------------------------------------------------------------
 
 import copy
+import io
 import logging
 import numpy
 import struct
@@ -42,6 +43,9 @@ class ConcentrationDump:
 
     def get_reader(self):
         return ConcentrationDumpFileReader(self)
+
+    def get_writer(self):
+        return ConcentrationDumpFileWriter(self)
 
     def dump(self, stream):
         stream.write("----- begin ConcentrationDump\n")
@@ -342,3 +346,166 @@ class ConcentrationDumpFileReader:
                 current_time_index += 1
 
         return self.conc_dump
+
+
+class FileWriterDecorator:
+
+   def __init__(self, obj):
+      self.__f = obj
+
+   def write(self, b: bytes):
+      self.__f.write(b)
+
+   def write_str(self, s: str, n: int):
+      b = bytes(s, 'ascii')
+      if len(b) >= n:
+         self.__f.write(b[0:n])
+      else:
+         self.__f.write(b)
+         b = bytes(' ', 'ascii')
+         for k in range(n - len(b)):
+            self.__f.write(b)
+
+   def write_int2(self, v: int):
+      self.__f.write(struct.pack('>h', v))
+
+   def write_int4(self, v: int):
+      self.__f.write(struct.pack('>i', v))
+
+   def write_real4(self, v: float):
+      self.__f.write(struct.pack('>f', v))
+
+   def write_record_marker(self, v: int):
+      self.write_int4(v)
+
+
+class ConcentrationDumpFileWriter:
+
+    def __init__(self, conc_dump):
+        self.conc_dump = conc_dump
+        self.utc = pytz.utc
+        self.cpack = 1  # 0=no, 1=yes for packing flag
+
+    def _encode_year(self, v: int) -> int:
+        return v % 100
+
+    def write(self, filename):
+        cdump = self.conc_dump
+
+        with open(filename, "wb") as f0:
+           f = FileWriterDecorator(f0)
+
+           # Record #1
+           f.write_record_marker(32)
+           f.write_str(cdump.meteo_model, 4)
+           f.write_int4(self._encode_year(cdump.meteo_starting_datetime.year))
+           f.write_int4(cdump.meteo_starting_datetime.month)
+           f.write_int4(cdump.meteo_starting_datetime.day)
+           f.write_int4(cdump.meteo_starting_datetime.hour)
+           f.write_int4(cdump.meteo_forecast_hour)
+           f.write_int4(len(cdump.release_locs))
+           f.write_int4(self.cpack)
+           f.write_record_marker(32)
+
+           # Record #2
+           for k,loc in enumerate(cdump.release_locs):
+              f.write_record_marker(32)
+              f.write_int4(self._encode_year(cdump.release_datetimes[k].year))
+              f.write_int4(cdump.release_datetimes[k].month)
+              f.write_int4(cdump.release_datetimes[k].day)
+              f.write_int4(cdump.release_datetimes[k].hour)
+              f.write_real4(loc[1])
+              f.write_real4(loc[0])
+              f.write_real4(cdump.release_heights[k])
+              f.write_int4(cdump.release_datetimes[k].minute)
+              f.write_record_marker(32)
+
+           # Record #3
+           f.write_record_marker(24)
+           f.write_int4(cdump.grid_sz[1])
+           f.write_int4(cdump.grid_sz[0])
+           f.write_real4(cdump.grid_deltas[1])
+           f.write_real4(cdump.grid_deltas[0])
+           f.write_real4(cdump.grid_loc[1])
+           f.write_real4(cdump.grid_loc[0])
+           f.write_record_marker(24)
+
+           # Record #4
+           n = len(cdump.vert_levels)
+           f.write_record_marker(4*(1+n))
+           f.write_int4(n)
+           for h in cdump.vert_levels:
+              f.write_int4(h)
+           f.write_record_marker(4*(1+n))
+
+           # Record #5
+           n = len(cdump.pollutants)
+           f.write_record_marker(4*(1+n))
+           f.write_int4(n)
+           for x in cdump.pollutants:
+              f.write_str(x, 4)
+           f.write_record_marker(4*(1+n))
+
+           # Records #6, #7, and #8
+           k = 0
+           while k < len(cdump.grids):
+              g = cdump.grids[k]
+
+              # Record #6
+              f.write_record_marker(24)
+              f.write_int4(self._encode_year(g.starting_datetime.year))
+              f.write_int4(g.starting_datetime.month)
+              f.write_int4(g.starting_datetime.day)
+              f.write_int4(g.starting_datetime.hour)
+              f.write_int4(g.starting_datetime.minute)
+              f.write_int4(g.starting_forecast_hr)
+              f.write_record_marker(24)
+
+              # Record #7
+              f.write_record_marker(24)
+              f.write_int4(self._encode_year(g.ending_datetime.year))
+              f.write_int4(g.ending_datetime.month)
+              f.write_int4(g.ending_datetime.day)
+              f.write_int4(g.ending_datetime.hour)
+              f.write_int4(g.ending_datetime.minute)
+              f.write_int4(g.ending_forecast_hr)
+              f.write_record_marker(24)
+
+              # Record #8
+              for x in cdump.pollutants:
+                 for h in cdump.vert_levels:
+                    g = cdump.grids[k]
+                    if self.cpack == 1:
+                       mem = io.BytesIO()
+                       f2 = FileWriterDecorator(mem)
+                       nonzero = 0
+                       for j in range(len(cdump.latitudes)):
+                          for i in range(len(cdump.longitudes)):
+                             v = g.conc[j,i]
+                             if v > 0.0:
+                                nonzero += 1
+                                f2.write_int2(i+1)
+                                f2.write_int2(j+1)
+                                f2.write_real4(v)
+                       n = 8*nonzero + 12
+                       f.write_record_marker(n)
+                       f.write_str(x, 4)
+                       f.write_int4(int(h))
+                       f.write_int4(nonzero)
+                       f.write(mem.getbuffer())
+                       f.write_record_marker(n)
+                       mem.close()
+                    else:
+                       n = len(cdump.latitudes) * len(cdump.longitudes) + 2
+                       f.write_record_marker(4*n)
+                       f.write_str(x, 4)
+                       f.write_int4(int(h))
+                       for j in range(len(cdump.latitudes)):
+                          for i in range(len(cdump.longitudes)):
+                             f.write_real4(g.conc[j,i])
+                       f.write_record_marker(4*n)
+
+                    k += 1
+
+        return self.conc_dump
+

@@ -296,8 +296,12 @@ class Trajectory:
         return False
 
     def repair_starting_datetime(self):
-        if len(self.__datetimes) > 0:
-            self.starting_datetime = self.__datetimes[0]
+        """
+        The minute in self.starting_datetime may not be set.
+        Set the minute value using the time at the first endpoint.
+        """
+        if len(self.__datetimes) > 0 and len(self.__ages) > 0 and self.__ages[0] == 0.0:
+            self.starting_datetime = self.starting_datetime.replace(minute=self.__datetimes[0].minute)
 
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
