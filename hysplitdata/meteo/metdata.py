@@ -4,6 +4,8 @@
 # metdata.py - classes for meteorological data contents.
 #
 # 25 JAN 2024 (SYZ) - Initial.
+#  6 SEP 2024 (SYZ) - Add the data property to MeteoDataSeciton for
+#                     auto-unpacking of the data.
 # -----------------------------------------------------------------------------
 from abc import ABC, abstractmethod
 from datetime import date, datetime
@@ -14,9 +16,7 @@ import numpy
 import os
 from pytz import utc
 
-
 from hysplitdata.meteo.utils import (_determine_record_len)
-
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class MeteoDataSection: pass
 
 
 class MeteoSection(ABC):
-   
+
    def __init__(self):
       self.year = 0
       self.month = 0
@@ -54,7 +54,7 @@ class MeteoSection(ABC):
    @abstractmethod
    def record_identifier(self):
       pass
-   
+
    @abstractmethod
    def dump(self):
       pass
@@ -67,10 +67,10 @@ class MeteoHeader(MeteoSection):
    INDX sections. If this is the case, consecutive INDX sections
    are stitched to yield one MeteoHeader object. 
    '''
-   
+
    def __init__(self):
-      super(MeteoHeader,self).__init__()
-      
+      super(MeteoHeader, self).__init__()
+
       # variables from the file
       self.model_id = None
       self.icx = 0
@@ -92,13 +92,13 @@ class MeteoHeader(MeteoSection):
       self.nz = 0
       self.z_flag = 0
       self.lenh = 0
-   
+
       # derived
       self.ldat = 0  # byte length of meteorological data (nx*ny)
       self.lrec = 0  # byte length of the record (50 + ldat)
       self.header_record_count = 0  # number of INDX records for the header
       self.header_storage_len = 0  # byte length of the header
-      
+
       self.heights = []  # list of floating-point numbers
       self.data_by_height = []  # list of dict() objects.
 
@@ -116,18 +116,18 @@ class MeteoHeader(MeteoSection):
             f'{self.hour:02d}:{self.minute:02d}z f{self.forecast_hr:02d}')
       print(f'   {self.model_id}, {self.nx}x{self.ny}x{self.nz}, '
             f'grid size {self.grid_size} ')
-      for hgt_idx,a in enumerate(self.data_by_height):
+      for hgt_idx, a in enumerate(self.data_by_height):
          height = self.heights[hgt_idx]
-         for var,o in a.items():
+         for var, o in a.items():
             print(f'   {var}, level {height}, chksum {o.checksum}')
             o.dump()
 
-   def collect(self, kvar: str, height: float = None) -> list:
+   def collect(self, kvar: str, height: float=None) -> list:
       r = []
       level = None if height is None else self.heights.index(height)
-      for hgt_idx,a in enumerate(self.data_by_height):
+      for hgt_idx, a in enumerate(self.data_by_height):
          if level is None or level == hgt_idx:
-            for var,o in a.items():
+            for var, o in a.items():
                if kvar is None or kvar == var:
                   r.append(o)
       return r
@@ -159,19 +159,26 @@ class MeteoHeader(MeteoSection):
 
 
 class MeteoDataSection(MeteoSection):
-   
+
    def __init__(self, header: MeteoHeader):
-      super(MeteoDataSection,self).__init__()
+      super(MeteoDataSection, self).__init__()
       self.header = header
       self.checksum = 0
       self.packed = None  # raw byte array
-      self.data = None
+      self.__data = None
       self.__max_value = None
       self.__min_value = None
 
    @property
    def record_identifier(self):
       return '{} {:04d}-{:02d}-{:02d} {:02d}:{:02d}z height {}'.format(
+            self.kvar,
+            self.year, self.month, self.day, self.hour, self.header.minute,
+            self.header.heights[self.vertical_level_index])
+
+   @property
+   def record_id_for_filename(self):
+      return '{}_{:04d}{:02d}{:02d}_{:02d}{:02d}z_height_{}'.format(
             self.kvar,
             self.year, self.month, self.day, self.hour, self.header.minute,
             self.header.heights[self.vertical_level_index])
@@ -189,33 +196,35 @@ class MeteoDataSection(MeteoSection):
       # return ksum
 
    def unpack(self):
-      self.data = numpy.zeros((self.header.ny,self.header.nx,), dtype=float)
+      self.__data = numpy.zeros((self.header.ny, self.header.nx,), dtype=float)
       c = math.pow(2., self.exponent - 7)
       starter = self.first_value
       for j in range(self.header.ny):
-         buf = self.packed[j*self.header.ny:j*self.header.ny+self.header.nx]
-         row = self.data[j]
-         row[0] = starter + (buf[0]-127)*c
-         for k,b in enumerate(buf[1:]):
-            row[k+1] = row[k] + (b-127)*c
+         buf = self.packed[j * self.header.ny:j * self.header.ny + self.header.nx]
+         row = self.__data[j]
+         row[0] = starter + (buf[0] - 127) * c
+         for k, b in enumerate(buf[1:]):
+            row[k + 1] = row[k] + (b - 127) * c
          starter = row[0]
 
    def dump(self):
       pass
-   
+
+   @property
+   def data(self):
+      if self.__data is None:
+         self.unpack()
+      return self.__data
+
    @property
    def max_value(self):
       if self.__max_value is None:
-         if self.data is None:
-            self.unpack()
          self.__max_value = numpy.amax(self.data)
       return self.__max_value
-   
+
    @property
    def min_value(self):
       if self.__min_value is None:
-         if self.data is None:
-            self.unpack()
          self.__min_value = numpy.amin(self.data)
       return self.__min_value
 
@@ -225,7 +234,7 @@ class MeteorologicalFileContent:
    def __init__(self, pathname: str):
       self.pathname = pathname
       self.indices = []  # list of MeteoHeader objects
-   
+
    def add_header(self, sec: MeteoHeader) -> None:
       self.indices.append(sec)
 
@@ -235,7 +244,7 @@ class MeteorologicalFileContent:
          o.dump()
       print(f'*** End of {self.pathname} ***')
 
-   def collect(self, kvar: str, height: float = None) -> list:
+   def collect(self, kvar: str, height: float=None) -> list:
       r = []
       for o in self.indices:
          r += o.collect(kvar, height)
@@ -274,23 +283,23 @@ class MeteorologicalFileReader:
       o.nz = int(s[99:102])
       o.z_flag = int(s[102:104])
       o.lenh = int(s[104:108])
-   
+
       if ord(o.cgrid[0]) >= 64 or ord(o.cgrid[1]) >= 64:
          o.nx += (ord(o.cgrid[0]) - 64) * 1000;
          o.ny += (ord(o.cgrid[1]) - 64) * 1000;
-   
+
       o.ldat = o.nx * o.ny;
       o.lrec = 50 + o.ldat;
-   
+
       o.header_record_count = int(o.lenh / o.ldat) + 1;
       o.header_storage_len = o.header_record_count * o.lrec;
 
       # So far we read 50 + 108 = 158 bytes
       s = f.read(o.lrec - 158).decode('ascii')
-      for k in range(o.header_record_count-1):
+      for k in range(o.header_record_count - 1):
          f.seek(50, os.SEEK_CUR)  # skip 50 bytes
          s += f.read(o.lrec - 50).decode('ascii')
-      
+
       ss = io.StringIO(s)
       for k in range(o.nz):
          height = float(ss.read(6))
@@ -311,7 +320,7 @@ class MeteorologicalFileReader:
       '''
       Return a section object and the number of bytes read.
       '''
-      
+
       # First 50 bytes
       s = f.read(50).decode('ascii')
 
@@ -354,7 +363,7 @@ class MeteorologicalFileReader:
       o = MeteorologicalFileContent(pathname)
 
       logger.debug(f'Reading {pathname} ...')
-      
+
       flen = os.path.getsize(pathname)
       with open(pathname, 'rb') as f:
          lrec, nhdr = _determine_record_len(f)
@@ -363,7 +372,7 @@ class MeteorologicalFileReader:
          self.record_byte_len = lrec
          self.indx_record_count = nhdr
          self.record_count = int(flen / lrec)
-   
+
          # loop over each record
          pos = 0
          while pos < flen:
@@ -380,7 +389,7 @@ class MeteorologicalFileReader:
    @staticmethod
    def read(pathname: str) -> MeteorologicalFileContent:
       return MeteorologicalFileReader().load(pathname)
- 
+
 
 def read_met_file(pathname: str) -> MeteorologicalFileContent:
    return MeteorologicalFileReader.read(pathname)
