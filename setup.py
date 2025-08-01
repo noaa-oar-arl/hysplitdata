@@ -21,6 +21,6 @@ setup(
     author_email=meta.__email__,
     packages=["hysplitdata", "hysplitdata.traj", "hysplitdata.conc",
               "hysplitdata.meteo"],
-    python_requires="==3.7",
-    install_requires=["numpy==1.20.1", "pytz==2021.1"]
+    python_requires=">=3.9",
+    install_requires=["numpy==2.0.2", "pytz==2025.2", "pytest==8.3.5"]
 )
