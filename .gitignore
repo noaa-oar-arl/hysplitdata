@@ -1,4 +1,5 @@
 .idea/
+/.venv/
 .project
 .pydevproject
 __pycache__/

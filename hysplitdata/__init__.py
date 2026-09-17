@@ -9,3 +9,7 @@ def read_tdump(fname: str):
 def read_cdump(fname: str):
    from .conc.model import ConcentrationDump
    return ConcentrationDump().get_reader().read(fname)
+
+def read_pardump(fname: str):
+   from .par.model import ParticleDump
+   return ParticleDump().get_reader().read(fname)

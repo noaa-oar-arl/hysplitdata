@@ -1,0 +1,10 @@
+# Core dependencies
+numpy>=2.0.2
+pytz>=2025.2
+
+# Optional: verification module
+pandas>=1.5.0
+matplotlib>=3.7.0
+
+# Testing
+pytest>=7.0.0
