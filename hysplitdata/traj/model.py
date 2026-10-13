@@ -11,10 +11,9 @@ from abc import ABC, abstractmethod
 import datetime
 import logging
 import numpy
-import pytz
+from datetime import timezone
 
 from hysplitdata import io, const, util
-
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class TrajectoryDump:
     def __init__(self):
         self.trajectory_direction = None
         self.vertical_motion = None
-        self.IDLBL = None   # identifier label: MERGMEAN, MERGLIST
+        self.IDLBL = None  # identifier label: MERGMEAN, MERGLIST
         self.grids = []
         self.trajectories = []
         self.format_version = 2
@@ -160,7 +159,7 @@ class TrajectoryDump:
 class MeteorologicalGrid:
 
     def __init__(self, parent=None):
-        self.parent = parent            # a TrajectoryDump instance
+        self.parent = parent  # a TrajectoryDump instance
         self.model = None
         self.datetime = None
         self.forecast_hour = 0
@@ -173,7 +172,7 @@ class MeteorologicalGrid:
 class Trajectory:
 
     def __init__(self, parent=None):
-        self.parent = parent            # a TrajectoryDump instance
+        self.parent = parent  # a TrajectoryDump instance
         self.starting_datetime = None
         self.starting_loc = (0, 0)
         self.starting_level = None
@@ -325,7 +324,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         self.end_hour_duration = 0
         self.vertical_coordinate = const.VerticalCoordinate.PRESSURE
         self.height_unit = const.HeightUnit.METERS
-        self.utc = pytz.utc
+        self.utc = timezone.utc
 
     def set_end_hour_duration(self, v):
         self.end_hour_duration = v
@@ -518,7 +517,7 @@ class AbstractVerticalCoordinate(ABC):
         self.values = []
 
     def scale(self, scale_factor):
-        self.values = [v*scale_factor for v in self.values]
+        self.values = [v * scale_factor for v in self.values]
 
     def need_axis_inversion(self):
         return False
@@ -571,7 +570,7 @@ class TerrainHeightCoordinate(AbstractVerticalCoordinate):
     def make_vertical_coordinates(self):
         self.values = numpy.add(self.t.heights, self.t.terrain_profile)
         if self.unit == const.HeightUnit.FEET:
-            self.scale(1.0 / 0.3048)    # meter to feet
+            self.scale(1.0 / 0.3048)  # meter to feet
 
     def get_vertical_label(self):
         if self.unit == const.HeightUnit.METERS:
@@ -593,7 +592,7 @@ class HeightCoordinate(AbstractVerticalCoordinate):
     def make_vertical_coordinates(self):
         self.values = self.t.heights
         if self.unit == const.HeightUnit.FEET:
-            self.scale(1.0 / 0.3048)    # meter to feet
+            self.scale(1.0 / 0.3048)  # meter to feet
 
     def get_vertical_label(self):
         if self.unit == const.HeightUnit.METERS:

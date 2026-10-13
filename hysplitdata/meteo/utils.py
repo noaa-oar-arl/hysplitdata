@@ -6,13 +6,11 @@
 # 25 JAN 2024 (SYZ) - Initial.
 # -----------------------------------------------------------------------------
 from abc import ABC
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from struct import unpack_from
 import logging
 # import sys
 import os
-from pytz import utc
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +26,7 @@ def _determine_record_len(f: object) -> tuple:
    cgrid = f.read(2)
    logger.debug(f'cgrid <<{cgrid}>>')
 
-   pos = 50 + 9 + 12*7;
+   pos = 50 + 9 + 12 * 7;
    f.seek(pos)
    buff = f.read(15)
    v = unpack_from('>9s', buff, 0)
@@ -43,13 +41,13 @@ def _determine_record_len(f: object) -> tuple:
    if cgrid[1] >= 64:
       ny += (cgrid[1] - 64) * 1000
    logger.debug(f'nx {nx}, ny {ny}, nz {nz}')
-   
+
    v = unpack_from('>4s', buff, 11)
    s = v[0].decode('utf-8')
    logger.debug(f'lenh <<{s}>>')
    lenh = int(s)
-   
-   lrec = 50 + nx*ny
+
+   lrec = 50 + nx * ny
    logger.debug(f'record length {lrec}, extended header length {lenh}')
    nidx = int(lenh / (lrec - 50)) + 1
    logger.debug(f'INDX takes {nidx} record(s)')
@@ -84,7 +82,7 @@ def _get_datetime_var(f: object) -> tuple:
       minute = int(s[0:2])
    else:
       minute = 0
-   return (datetime(year, month, day, hour, minute, 0, tzinfo=utc), varname,)
+   return (datetime(year, month, day, hour, minute, 0, tzinfo=timezone.utc), varname,)
 
 
 def get_temporal_coverage(pathname: str) -> tuple:
@@ -93,7 +91,7 @@ def get_temporal_coverage(pathname: str) -> tuple:
    in minutes.
    '''
    logger.debug(f'Reading {pathname} ...')
-   
+
    flen = os.path.getsize(pathname)
    with open(pathname, 'rb') as f:
       lrec, nhdr = _determine_record_len(f)

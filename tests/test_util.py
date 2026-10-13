@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------
 
 import pytest
-import pytz
+from datetime import timezone
 from hysplitdata import util
 
 
@@ -27,7 +27,7 @@ def test_myzip():
 
 
 def test_make_datetime():
-    dt = util.make_datetime(2020, 1, 16, 8, 0, 1, 2, pytz.utc)
+    dt = util.make_datetime(2020, 1, 16, 8, 0, 1, 2, timezone.utc)
     assert dt.year == 2020
     assert dt.month == 1
     assert dt.day == 16
@@ -35,9 +35,9 @@ def test_make_datetime():
     assert dt.minute == 0
     assert dt.second == 1
     assert dt.microsecond == 2
-    assert dt.tzinfo is pytz.utc
+    assert dt.tzinfo is timezone.utc
 
-    dt = util.make_datetime(0, 0, 0, 8, 0, 1, 2, pytz.utc)
+    dt = util.make_datetime(0, 0, 0, 8, 0, 1, 2, timezone.utc)
     assert dt.year == 1970
     assert dt.month == 1
     assert dt.day == 1

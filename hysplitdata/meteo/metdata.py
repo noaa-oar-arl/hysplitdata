@@ -14,7 +14,6 @@ import logging
 import math
 import numpy
 import os
-from pytz import utc
 
 from hysplitdata.meteo.utils import (_determine_record_len)
 

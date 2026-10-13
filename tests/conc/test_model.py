@@ -10,7 +10,7 @@ import datetime
 import numpy
 import os
 import pytest
-import pytz
+from datetime import timezone
 from hysplitdata import util
 from hysplitdata.conc import model
 
@@ -168,7 +168,7 @@ def test_ConcentrationGrid_longitudes(cdump):
 def test_ConcentrationGrid_clone(cdump):
     target = cdump.grids[0]
     g = target.clone()
-    utc = pytz.utc
+    utc = timezone.utc
     
     assert g.parent is cdump
     assert g.time_index == 0
@@ -192,7 +192,7 @@ def test_ConcentrationGrid_clone(cdump):
 def test_ConcentrationGrid_clone_except_conc(cdump):
     target = cdump.grids[0]
     g = target.clone_except_conc()
-    utc = pytz.utc
+    utc = timezone.utc
     
     assert g.parent is cdump
     assert g.time_index == 0
@@ -240,13 +240,13 @@ def test_ConcentrationDumpFileReader___init__():
     r = model.ConcentrationDumpFileReader(m)
     
     assert r.conc_dump is m
-    assert r.utc is pytz.utc
+    assert r.utc is timezone.utc
 
 
 def test_ConcentrationDumpFileReader_read():
     m = model.ConcentrationDump()
     r = model.ConcentrationDumpFileReader(m)
-    utc = pytz.utc
+    utc = timezone.utc
     
     r.read("data/cdump_two_pollutants")
     
@@ -348,7 +348,7 @@ def test_ConcentrationDumpFileWriter___init__():
     w = model.ConcentrationDumpFileWriter(m)
     
     assert w.conc_dump is m
-    assert w.utc is pytz.utc
+    assert w.utc is timezone.utc
     assert w.cpack == 1
 
 
@@ -358,7 +358,7 @@ def test_ConcentrationDumpFileWriter_write(cdump):
     
     m = model.ConcentrationDump()
     r = model.ConcentrationDumpFileReader(m)
-    utc = pytz.utc
+    utc = timezone.utc
     
     r.read("cdump_writer_test")
     

@@ -8,7 +8,7 @@
 
 import datetime
 import pytest
-import pytz
+from datetime import timezone
 from hysplitdata.traj import model
 from hysplitdata import const
 
@@ -221,7 +221,7 @@ def test_TrajectoryDump_get_age_range(plotData):
 
 def test_TrajectoryDump_get_datetime_range(plotData):
     r = plotData.get_datetime_range()
-    utc = pytz.utc
+    utc = timezone.utc
     
     assert r[0] == datetime.datetime(1995, 10, 16,  0, 0, 0, 0, utc)
     assert r[1] == datetime.datetime(1995, 10, 16, 12, 0, 0, 0, utc)
@@ -236,7 +236,7 @@ def test_TrajectoryDump_get_max_forecast_hour(plotData):
 
 def test_TrajectoryDump_get_forecast_init_datetime(plotData):
     r = plotData.get_forecast_init_datetime()
-    utc = pytz.utc
+    utc = timezone.utc
 
     assert r == datetime.datetime(1995, 10, 16,  0, 0, 0, 0, utc)
 
@@ -246,19 +246,19 @@ def test_TrajectoryDump_fix_start_datetimes():
 
     t = model.Trajectory()
     t.starting_level = 10.0
-    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, timezone.utc)
     t.longitudes = [0]
     t.latitues = [0]
     t.pressures = [700.0]
     t.ages = [0.]
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, timezone.utc)]
     d.trajectories.append(t)
 
     # Run and check
     d.fix_start_datetimes()
 
-    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, timezone.utc)
 
 
 def test_TrajectoryDump_fix_vertical_coordinates():
@@ -317,7 +317,7 @@ def test_TrajectoryDump_fix_start_levels():
 
 
 def test_TrajectoryDump_case1():
-    utc = pytz.utc
+    utc = timezone.utc
     d = model.TrajectoryDump()
     r = model.TrajectoryDumpFileReader(d)
     r.read("data/tdump_multi")
@@ -408,7 +408,7 @@ def test_Trajectory_ages(plotData):
 
 def test_Trajectory_datetimes(plotData):
     datetimes = plotData.trajectories[0].datetimes
-    utc = pytz.utc
+    utc = timezone.utc
     assert len(datetimes) == 13
     assert datetimes[0] == datetime.datetime(1995, 10, 16, 0, 0, 0, 0, utc)
     assert datetimes[12] == datetime.datetime(1995, 10, 16, 12, 0, 0, 0, utc)
@@ -518,9 +518,9 @@ def test_Trajectory_has_trajectory_stddevs(plotData):
 
 def test_Trajectory_repair_starting_datetime():
     t = model.Trajectory()
-    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, pytz.utc)
+    t.starting_datetime = datetime.datetime(2020, 12, 1, 9, 0, 0, 0, timezone.utc)
     # note the minute field is different.
-    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)]
+    t.datetimes = [datetime.datetime(2020, 12, 1, 9, 30, 0, 0, timezone.utc)]
     t.longitudes = [0, 1, 2, 3]
     t.latitudes = [1, 2, 3, 4]
     t.ages = [0., 1., 2., 3.]
@@ -528,7 +528,7 @@ def test_Trajectory_repair_starting_datetime():
     
     t.repair_starting_datetime()
     
-    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, pytz.utc)
+    assert t.starting_datetime == datetime.datetime(2020, 12, 1, 9, 30, 0, 0, timezone.utc)
 
 
 def test_Trajectory_repair_starting_location():
@@ -590,7 +590,7 @@ def test_TrajectoryDumpFileReader_read():
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
-    utc = pytz.utc
+    utc = timezone.utc
 
     o = r.read("data/tdump")
     vertical_coordinate = r.vertical_coordinate
@@ -695,7 +695,7 @@ def test_TrajectoryDumpFileReader_read_backward():
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
-    utc = pytz.utc
+    utc = timezone.utc
 
     o = r.read("data/tdump_bwd")
     vertical_coordinate = r.vertical_coordinate
@@ -781,7 +781,7 @@ def test_TrajectoryDumpFileReader_read_fmt0():
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
-    utc = pytz.utc
+    utc = timezone.utc
     
     r.read("data/tdump_fmt0")
     vertical_coordinate = r.vertical_coordinate
@@ -879,7 +879,7 @@ def test_TrajectoryDumpFileReader_read_fmt1():
     r = model.TrajectoryDumpFileReader(d)
     r.set_end_hour_duration(0)
     r.set_vertical_coordinate(const.VerticalCoordinate.NOT_SET, const.HeightUnit.METERS)
-    utc = pytz.utc
+    utc = timezone.utc
     
     r.read("data/tdump_fmt1")
     vertical_coordinate = r.vertical_coordinate

@@ -12,7 +12,6 @@ from abc import ABC
 from datetime import date, datetime
 import logging
 import os
-from pytz import utc
 
 from .utils import get_temporal_coverage
 
@@ -26,6 +25,7 @@ logger = logging.getLogger(__name__)
 #        +-- ArchiveFile
 #
 
+
 class MeteorologicalFile(ABC):
     """
     Meteorological file just with the pathname, the start time,
@@ -34,10 +34,10 @@ class MeteorologicalFile(ABC):
     """
 
     def __init__(self,
-                 pathname : str,
-                 start_datetime : datetime = None,
-                 ending_datetime : datetime = None,
-                 time_step : int = 3*60):
+                 pathname: str,
+                 start_datetime: datetime=None,
+                 ending_datetime: datetime=None,
+                 time_step: int=3 * 60):
         self.pathname = pathname
         self.start_datetime = start_datetime
         self.ending_datetime = ending_datetime
@@ -58,7 +58,7 @@ class MeteorologicalFile(ABC):
         return os.path.basename(self.pathname)
 
     def encompass_range(self,
-                        datetime_range : tuple) -> bool:
+                        datetime_range: tuple) -> bool:
         """
         Test if the file completely encompasses the given time range.
         """
@@ -76,14 +76,15 @@ class ForecastFile(MeteorologicalFile):
     Represents a forecast file.
     Additional properties like forecast date and forecast cycle are added.
     """
+
     def __init__(self,
-                 pathname : str,
-                 forecast_date : date,
-                 cycle : int,
-                 start_datetime : datetime,
-                 ending_datetime : datetime,
-                 preference : int = 0,
-                 time_step : int = 3*60):
+                 pathname: str,
+                 forecast_date: date,
+                 cycle: int,
+                 start_datetime: datetime,
+                 ending_datetime: datetime,
+                 preference: int=0,
+                 time_step: int=3 * 60):
         super(ForecastFile, self).__init__(pathname,
                                            start_datetime,
                                            ending_datetime,
@@ -119,10 +120,10 @@ class ArchiveFile(MeteorologicalFile):
     """
 
     def __init__(self,
-                 pathname : str,
-                 start_datetime : datetime,
-                 ending_datetime : datetime,
-                 time_step : int = 3*60):
+                 pathname: str,
+                 start_datetime: datetime,
+                 ending_datetime: datetime,
+                 time_step: int=3 * 60):
         super(ArchiveFile, self).__init__(pathname,
                                           start_datetime,
                                           ending_datetime,
@@ -139,10 +140,10 @@ class ArchiveFile(MeteorologicalFile):
 
 def get_met_file(pathname: str) -> MeteorologicalFile:
    start_time, ending_time, step = get_temporal_coverage(pathname)
-   
+
    o = MeteorologicalFile(pathname)
    o.start_datetime = start_time
    o.ending_datetime = ending_time
    o.time_step = step
-   
+
    return o

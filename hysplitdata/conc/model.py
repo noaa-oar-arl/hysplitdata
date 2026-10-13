@@ -12,10 +12,9 @@ import io
 import logging
 import numpy
 import struct
-import pytz
+from datetime import timezone
 
 from hysplitdata import const, util
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +22,14 @@ logger = logging.getLogger(__name__)
 class ConcentrationDump:
 
     def __init__(self):
-        self.meteo_model = None    # meteorological model identification
+        self.meteo_model = None  # meteorological model identification
         self.meteo_starting_datetime = None
         self.meteo_forecast_hour = 0
         self.release_datetimes = []
         self.release_locs = []
         self.release_heights = []
-        self.grid_deltas = None     # (dlon, dlat)
-        self.grid_loc = None        # grid lower left corner (lon, lat)
+        self.grid_deltas = None  # (dlon, dlat)
+        self.grid_loc = None  # grid lower left corner (lon, lat)
         self.grid_sz = None
         self.vert_levels = []
         self.pollutants = []
@@ -101,16 +100,16 @@ class ConcentrationGrid:
         self.time_index = -1
         self.pollutant_index = -1
         self.vert_level_index = -1
-        self.pollutant = None           # name of the pollutant
-        self.vert_level = 0             # height in meters above ground
+        self.pollutant = None  # name of the pollutant
+        self.vert_level = 0  # height in meters above ground
         self.starting_datetime = None
         self.ending_datetime = None
         self.starting_forecast_hr = 0
         self.ending_forecast_hr = 0
-        self.__conc = None              # conc[lat_index, lon_index]
+        self.__conc = None  # conc[lat_index, lon_index]
         # number of non-zero conc. values.  None if no counting was done.
         self.nonzero_conc_count = None
-        self.extension = None           # for extending the data structure
+        self.extension = None  # for extending the data structure
 
     def dump(self, stream):
         stream.write("conc grid: pollutant {0}, level {1}, start {2}, "
@@ -177,7 +176,7 @@ class ConcentrationDumpFileReader:
 
     def __init__(self, conc_dump):
         self.conc_dump = conc_dump
-        self.utc = pytz.utc
+        self.utc = timezone.utc
 
     def read(self, filename):
         cdump = self.conc_dump
@@ -191,7 +190,7 @@ class ConcentrationDumpFileReader:
                             "hhfhhfhhfhhfhhfhhfhhfhhf")
 
         pollutant_dict = dict()  # to map a pollutant to its array index
-        level_dict = dict()      # to map a level to its array index
+        level_dict = dict()  # to map a level to its array index
 
         current_time_index = 0
 
@@ -331,13 +330,13 @@ class ConcentrationDumpFileReader:
                                 cur += 8 * chunk_sz
                                 for j in range(chunk_sz):
                                     i = (j << 1) + j
-                                    g.conc[v[i+1]-1, v[i]-1] = v[i+2]
+                                    g.conc[v[i + 1] - 1, v[i] - 1] = v[i + 2]
                             left = count % chunk_sz
                             if left > 0:
                                 for k in range(left):
                                     v = struct.unpack_from('>hhf', buff, cur)
                                     cur += 8
-                                    g.conc[v[1]-1, v[0]-1] = v[2]
+                                    g.conc[v[1] - 1, v[0] - 1] = v[2]
                         else:
                             raise Exception("unsupported packing option [{}]"
                                             .format(packing_flag))
@@ -383,7 +382,7 @@ class ConcentrationDumpFileWriter:
 
     def __init__(self, conc_dump):
         self.conc_dump = conc_dump
-        self.utc = pytz.utc
+        self.utc = timezone.utc
         self.cpack = 1  # 0=no, 1=yes for packing flag
 
     def _encode_year(self, v: int) -> int:
@@ -408,7 +407,7 @@ class ConcentrationDumpFileWriter:
            f.write_record_marker(32)
 
            # Record #2
-           for k,loc in enumerate(cdump.release_locs):
+           for k, loc in enumerate(cdump.release_locs):
               f.write_record_marker(32)
               f.write_int4(self._encode_year(cdump.release_datetimes[k].year))
               f.write_int4(cdump.release_datetimes[k].month)
@@ -432,19 +431,19 @@ class ConcentrationDumpFileWriter:
 
            # Record #4
            n = len(cdump.vert_levels)
-           f.write_record_marker(4*(1+n))
+           f.write_record_marker(4 * (1 + n))
            f.write_int4(n)
            for h in cdump.vert_levels:
               f.write_int4(h)
-           f.write_record_marker(4*(1+n))
+           f.write_record_marker(4 * (1 + n))
 
            # Record #5
            n = len(cdump.pollutants)
-           f.write_record_marker(4*(1+n))
+           f.write_record_marker(4 * (1 + n))
            f.write_int4(n)
            for x in cdump.pollutants:
               f.write_str(x, 4)
-           f.write_record_marker(4*(1+n))
+           f.write_record_marker(4 * (1 + n))
 
            # Records #6, #7, and #8
            k = 0
@@ -481,13 +480,13 @@ class ConcentrationDumpFileWriter:
                        nonzero = 0
                        for j in range(len(cdump.latitudes)):
                           for i in range(len(cdump.longitudes)):
-                             v = g.conc[j,i]
+                             v = g.conc[j, i]
                              if v > 0.0:
                                 nonzero += 1
-                                f2.write_int2(i+1)
-                                f2.write_int2(j+1)
+                                f2.write_int2(i + 1)
+                                f2.write_int2(j + 1)
                                 f2.write_real4(v)
-                       n = 8*nonzero + 12
+                       n = 8 * nonzero + 12
                        f.write_record_marker(n)
                        f.write_str(x, 4)
                        f.write_int4(int(h))
@@ -497,13 +496,13 @@ class ConcentrationDumpFileWriter:
                        mem.close()
                     else:
                        n = len(cdump.latitudes) * len(cdump.longitudes) + 2
-                       f.write_record_marker(4*n)
+                       f.write_record_marker(4 * n)
                        f.write_str(x, 4)
                        f.write_int4(int(h))
                        for j in range(len(cdump.latitudes)):
                           for i in range(len(cdump.longitudes)):
-                             f.write_real4(g.conc[j,i])
-                       f.write_record_marker(4*n)
+                             f.write_real4(g.conc[j, i])
+                       f.write_record_marker(4 * n)
 
                     k += 1
 

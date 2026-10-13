@@ -8,11 +8,10 @@
 # Last update: 22 MAR 2023
 # ---------------------------------------------------------------------------
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import logging
 import os
 import pytest
-from pytz import utc
 
 from hysplitdata.meteo.metfile import (
    ArchiveFile,
@@ -26,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 def test_MeteorologicalFile___init__():
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o = MeteorologicalFile('/data/hysplit.t00z.foo', t1, t2)
     assert o.pathname == '/data/hysplit.t00z.foo'
     assert o.start_datetime == t1
@@ -38,13 +37,13 @@ def test_MeteorologicalFile___init__():
 def test_MeteorologicalFile___eq__():
     # o1 produced at 0z
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o1 = MeteorologicalFile('/data/hysplit.t00z.foo', t1, t2)
     # o2 produced at 6z
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=timezone.utc)
     o2 = MeteorologicalFile('/data/hysplit.t06z.foo', t1, t2)
     # tests
     assert o1 == o1
@@ -55,58 +54,58 @@ def test_MeteorologicalFile___eq__():
 def test_MeteorologicalFile___str__():
     # o1 produced at 0z
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o1 = MeteorologicalFile('/data/hysplit.t00z.foo', t1, t2)
     # test
     assert str(o1) == '/data/hysplit.t00z.foo'
 
 
 def test_MeteorologicalFile_directory():
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=timezone.utc)
     o = MeteorologicalFile('/pub/forecast/20210128/hysplit.t00z.foo', t1, t2)
     # test
     assert o.directory == '/pub/forecast/20210128'
 
 
 def test_MeteorologicalFile_filename():
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=timezone.utc)
     o = MeteorologicalFile('/pub/forecast/20210128/hysplit.t00z.foo', t1, t2)
     # test
     assert o.filename == 'hysplit.t00z.foo'
 
 
 def test_MeteorologicalFile_encompass_range():
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 2,  3, 0, 0, tzinfo=timezone.utc)
     o = MeteorologicalFile('/data/hysplit.t00z.foo', t1, t2)
     # no overlap
-    r = (datetime(2021, 1, 26, 18, 0, tzinfo=utc),
-         datetime(2021, 1, 27,  0, 0, tzinfo=utc))
+    r = (datetime(2021, 1, 26, 18, 0, tzinfo=timezone.utc),
+         datetime(2021, 1, 27,  0, 0, tzinfo=timezone.utc))
     assert o.encompass_range(r) == False
     # partial overlap
-    r = (datetime(2021, 1, 26, 18, 0, tzinfo=utc),
-         datetime(2021, 1, 27,  6, 0, tzinfo=utc))
+    r = (datetime(2021, 1, 26, 18, 0, tzinfo=timezone.utc),
+         datetime(2021, 1, 27,  6, 0, tzinfo=timezone.utc))
     assert o.encompass_range(r) == False
     # arg is completely inside the file time range.
-    r = (datetime(2021, 1, 27,  0, 0, tzinfo=utc),
-         datetime(2021, 1, 27,  6, 0, tzinfo=utc))
+    r = (datetime(2021, 1, 27,  0, 0, tzinfo=timezone.utc),
+         datetime(2021, 1, 27,  6, 0, tzinfo=timezone.utc))
     assert o.encompass_range(r) == True
-    r = (datetime(2021, 2,  2, 18, 0, tzinfo=utc),
-         datetime(2021, 2,  3,  0, 0, tzinfo=utc))
+    r = (datetime(2021, 2,  2, 18, 0, tzinfo=timezone.utc),
+         datetime(2021, 2,  3,  0, 0, tzinfo=timezone.utc))
     assert o.encompass_range(r) == True
     # no overlap
-    r = (datetime(2021, 2,  2, 18, 0, tzinfo=utc),
-         datetime(2021, 2,  3,  6, 0, tzinfo=utc))
+    r = (datetime(2021, 2,  2, 18, 0, tzinfo=timezone.utc),
+         datetime(2021, 2,  3,  6, 0, tzinfo=timezone.utc))
     assert o.encompass_range(r) == False
 
 
 def test_ForecastFile___init__():
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o = ForecastFile('/data/hysplit.t00z.foo', fd, 0, t1, t2,
                      preference=1, time_step=360)
     assert o.pathname == '/data/hysplit.t00z.foo'
@@ -121,18 +120,18 @@ def test_ForecastFile___init__():
 def test_ForecastFile_compare_priority():
     # o1 produced at 0z
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o1 = ForecastFile('/data/hysplit.t00z.foo', fd, 0, t1, t2)
     # o2 produced at 6z
     fd = date(2021, 1, 27)
-    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=timezone.utc)
     o2 = ForecastFile('/data/hysplit.t06z.foo', fd, 6, t1, t2)
     # o3 produced at 6z but on 1/26.
     fd = date(2021, 1, 26)
-    t1 = datetime(2021, 1, 26,  6, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 26, 12, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 26,  6, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 26, 12, 0, tzinfo=timezone.utc)
     o3 = ForecastFile('/data/hysplit.t06z.foo', fd, 6, t1, t2)
     # tests
     ForecastFile.compare_priority(o1, o2) == -1
@@ -150,8 +149,8 @@ def test_ForecastFile_compare_priority():
 
 
 def test_ArchiveFile___init__():
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o = ArchiveFile('/data/hysplit.t00z.foo', t1, t2, time_step=360)
     assert o.pathname == '/data/hysplit.t00z.foo'
     assert o.start_datetime == t1
@@ -161,12 +160,12 @@ def test_ArchiveFile___init__():
 
 def test_ArchiveFile_compare_priority():
     # o1 produced at 0z
-    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27, 0, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 6, 0, tzinfo=timezone.utc)
     o1 = ArchiveFile('/data/hysplit.t00z.foo', t1, t2)
     # o2 produced at 6z
-    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=utc)
-    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=utc)
+    t1 = datetime(2021, 1, 27,  6, 0, tzinfo=timezone.utc)
+    t2 = datetime(2021, 1, 27, 12, 0, tzinfo=timezone.utc)
     o2 = ArchiveFile('/data/hysplit.t06z.foo', t1, t2)
     # tests
     ArchiveFile.compare_priority(o1, o2) == -1
@@ -178,8 +177,8 @@ def test_ArchiveFile_compare_priority():
 def test_get_met_file():
    o = get_met_file('data/oct1618.BIN')
    assert o.pathname == 'data/oct1618.BIN'
-   assert o.start_datetime == datetime(1995,10,16,0,0,0,tzinfo=utc)
-   assert o.ending_datetime == datetime(1995,10,18,22,0,0,tzinfo=utc)
+   assert o.start_datetime == datetime(1995,10,16,0,0,0,tzinfo=timezone.utc)
+   assert o.ending_datetime == datetime(1995,10,18,22,0,0,tzinfo=timezone.utc)
    assert o.time_step == 120
    
    

@@ -7,9 +7,9 @@ is part of a precompiled HYSPLIT distribution. For detailed installation instruc
 refer to https://www.ready.noaa.gov/documents/Tutorial/html/disp_python.html
 
 To upgrade HYSPLITDATA that is already installed along with your HYSPLIT distribution,
-first activate the hysplit anaconda environment:
+first activate your hysplit python virtual environment, for example:
 
-    $ conda activate hysplit
+    $ . ~/virtenv/python3.12/hysplit/bin/activate
 
 then execute the setup.py script as shown below
 
