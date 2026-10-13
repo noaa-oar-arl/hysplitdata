@@ -8,17 +8,15 @@
 
 import logging
 import os
-
+from typing import List
 
 logger = logging.getLogger(__name__)
 
 
 class FormattedLineReader:
-    """Parses a text line with a FORTRAN-like format
+    """Parses a text line with a FORTRAN-like format"""
 
-    """
-
-    def parse_format(self, format):
+    def parse_format(self, fmt: str) -> List:
         flist = []
 
         repeat = 1
@@ -29,31 +27,31 @@ class FormattedLineReader:
         state = 0
         start = 0
         last = -1
-        for k in range(len(format)):
-            c = format[k:k+1]
+        for k in range(len(fmt)):
+            c = fmt[k : k + 1]
             if state == 0:
                 # looking for type
                 if c.isdigit():
                     last = k + 1
                 elif c.isalpha():
-                    repeat = int(format[start:last]) if last > start else 1
+                    repeat = int(fmt[start:last]) if last > start else 1
                     type = c
                     start = k + 1
                     last = -1
-                    if c == 'X':
+                    if c == "X":
                         flist.append([repeat, type])
-                    elif c == 'F':
+                    elif c == "F":
                         state = 2
                     else:
                         state = 1
-                elif c == ' ':
+                elif c == " ":
                     start = k + 1
             elif state == 1:
                 # looking for integer width
                 if c.isdigit():
                     last = k + 1
-                elif c == ',' or c == ' ':
-                    width = int(format[start:last])
+                elif c == "," or c == " ":
+                    width = int(fmt[start:last])
                     flist.append([repeat, type, width])
                     type = None
                     start = k + 1
@@ -63,8 +61,8 @@ class FormattedLineReader:
                 # looking for float width
                 if c.isdigit():
                     last = k + 1
-                elif c == '.':
-                    width = int(format[start:last])
+                elif c == ".":
+                    width = int(fmt[start:last])
                     start = k + 1
                     last = -1
                     state = 3
@@ -72,8 +70,8 @@ class FormattedLineReader:
                 # looking for float precision
                 if c.isdigit():
                     last = k + 1
-                elif c == ',' or c == ' ':
-                    precision = int(format[start:last])
+                elif c == "," or c == " ":
+                    precision = int(fmt[start:last])
                     flist.append([repeat, type, width, precision])
                     type = None
                     start = k + 1
@@ -81,58 +79,56 @@ class FormattedLineReader:
                     state = 0
 
         if state == 1:
-            width = int(format[start:last])
+            width = int(fmt[start:last])
             flist.append([repeat, type, width])
         elif state == 2:
-            width = int(format[start:last])
+            width = int(fmt[start:last])
             precision = 0
             flist.append([repeat, type, width, precision])
         elif state == 3:
-            precision = int(format[start:last])
+            precision = int(fmt[start:last])
             flist.append([repeat, type, width, precision])
 
         return flist
 
-    def parse(self, format, line):
+    def parse(self, fmt: str, line: str) -> List:
         data = []
         line_len = len(line)
 
-        flist = self.parse_format(format)
+        flist = self.parse_format(fmt)
 
         start = last = 0
         for fmt in flist:
             for k in range(fmt[0]):  # repetition, e.g., 3 in 3I6
                 c = fmt[1]
-                if c == 'X':
+                if c == "X":
                     start += 1
-                elif c == 'A':
+                elif c == "A":
                     last = start + fmt[2]
                     if start < line_len:
                         str = line[start:last]
                         data.append(str)
                     start = last
-                elif c == 'I':
+                elif c == "I":
                     last = start + fmt[2]
                     if start < line_len:
                         str = line[start:last]
                         data.append(int(str))
                     start = last
-                elif c == 'F':
+                elif c == "F":
                     last = start + fmt[2]
                     if start < line_len:
                         str = line[start:last]
                         data.append(float(str))
                     start = last
                 else:
-                    raise Exception("unknown format type [{0}]".format(c))
+                    raise Exception(f"unknown format type [{c}]")
 
         return data
 
 
 class FormattedTextFileReader:
-    """File reader for text data in FORTRAN way
-
-    """
+    """File reader for text data in FORTRAN way"""
 
     def __init__(self):
         self.lines = ()
@@ -140,7 +136,7 @@ class FormattedTextFileReader:
         self.buffer = None
         self.formatter = FormattedLineReader()
 
-    def open(self, filename):
+    def open(self, filename: str) -> None:
         logger.debug("reading text file %s", filename)
 
         if os.path.exists(filename):
@@ -152,14 +148,13 @@ class FormattedTextFileReader:
             self.buffer = None
             f.close()
         else:
-            raise Exception("FATAL ERROR - File not found: {0}"
-                            .format(filename))
+            raise Exception(f"FATAL ERROR - File not found: {filename}")
 
-    def close(self):
+    def close(self) -> None:
         # do nothing as the file is already closed in open().
         return
 
-    def fetch_line(self):
+    def fetch_line(self) -> str:
         if self.line_index < len(self.lines):
             self.line_index += 1
             self.buffer = self.lines[self.line_index]
@@ -167,17 +162,16 @@ class FormattedTextFileReader:
             raise Exception("reached end of line")
         return self.buffer
 
-    def has_next(self):
-        return True if (self.line_index < len(self.lines) - 1) else False
+    def has_next(self) -> bool:
+        return self.line_index < len(self.lines) - 1
 
-    def parse_line(self, format):
-        return self.formatter.parse(format, self.fetch_line())
+    def parse_line(self, fmt: str) -> List:
+        return self.formatter.parse(fmt, self.fetch_line())
 
-    def look_ahead(self, format):
+    def look_ahead(self, fmt: str) -> List:
         if self.has_next():
-            return self.formatter.parse(format,
-                                        self.lines[self.line_index + 1])
+            return self.formatter.parse(fmt, self.lines[self.line_index + 1])
         raise Exception("reached end of line")
 
-    def get_current_line(self):
+    def get_current_line(self) -> str:
         return self.buffer

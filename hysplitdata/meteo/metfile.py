@@ -33,11 +33,13 @@ class MeteorologicalFile(ABC):
     run has enough meteorological data coverage.
     """
 
-    def __init__(self,
-                 pathname: str,
-                 start_datetime: datetime=None,
-                 ending_datetime: datetime=None,
-                 time_step: int=3 * 60):
+    def __init__(
+        self,
+        pathname: str,
+        start_datetime: datetime = None,
+        ending_datetime: datetime = None,
+        time_step: int = 3 * 60,
+    ):
         self.pathname = pathname
         self.start_datetime = start_datetime
         self.ending_datetime = ending_datetime
@@ -57,8 +59,7 @@ class MeteorologicalFile(ABC):
     def filename(self):
         return os.path.basename(self.pathname)
 
-    def encompass_range(self,
-                        datetime_range: tuple) -> bool:
+    def encompass_range(self, datetime_range: tuple) -> bool:
         """
         Test if the file completely encompasses the given time range.
         """
@@ -77,18 +78,19 @@ class ForecastFile(MeteorologicalFile):
     Additional properties like forecast date and forecast cycle are added.
     """
 
-    def __init__(self,
-                 pathname: str,
-                 forecast_date: date,
-                 cycle: int,
-                 start_datetime: datetime,
-                 ending_datetime: datetime,
-                 preference: int=0,
-                 time_step: int=3 * 60):
-        super(ForecastFile, self).__init__(pathname,
-                                           start_datetime,
-                                           ending_datetime,
-                                           time_step=time_step)
+    def __init__(
+        self,
+        pathname: str,
+        forecast_date: date,
+        cycle: int,
+        start_datetime: datetime,
+        ending_datetime: datetime,
+        preference: int = 0,
+        time_step: int = 3 * 60,
+    ):
+        super(ForecastFile, self).__init__(
+            pathname, start_datetime, ending_datetime, time_step=time_step
+        )
         self.forecast_date = forecast_date
         self.cycle = cycle
         self.preference = preference  # the larger, the more preferred
@@ -119,15 +121,16 @@ class ArchiveFile(MeteorologicalFile):
     Represents an archive file.
     """
 
-    def __init__(self,
-                 pathname: str,
-                 start_datetime: datetime,
-                 ending_datetime: datetime,
-                 time_step: int=3 * 60):
-        super(ArchiveFile, self).__init__(pathname,
-                                          start_datetime,
-                                          ending_datetime,
-                                          time_step=time_step)
+    def __init__(
+        self,
+        pathname: str,
+        start_datetime: datetime,
+        ending_datetime: datetime,
+        time_step: int = 3 * 60,
+    ):
+        super(ArchiveFile, self).__init__(
+            pathname, start_datetime, ending_datetime, time_step=time_step
+        )
 
     @staticmethod
     def compare_priority(a, b):
@@ -139,11 +142,11 @@ class ArchiveFile(MeteorologicalFile):
 
 
 def get_met_file(pathname: str) -> MeteorologicalFile:
-   start_time, ending_time, step = get_temporal_coverage(pathname)
+    start_time, ending_time, step = get_temporal_coverage(pathname)
 
-   o = MeteorologicalFile(pathname)
-   o.start_datetime = start_time
-   o.ending_datetime = ending_time
-   o.time_step = step
+    o = MeteorologicalFile(pathname)
+    o.start_datetime = start_time
+    o.ending_datetime = ending_time
+    o.time_step = step
 
-   return o
+    return o

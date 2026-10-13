@@ -112,12 +112,16 @@ class ConcentrationGrid:
         self.extension = None  # for extending the data structure
 
     def dump(self, stream):
-        stream.write("conc grid: pollutant {0}, level {1}, start {2}, "
-                     "end {3}, grid {4}\n".format(self.pollutant,
-                                                  self.vert_level,
-                                                  self.starting_datetime,
-                                                  self.ending_datetime,
-                                                  self.conc))
+        stream.write(
+            "conc grid: pollutant {0}, level {1}, start {2}, "
+            "end {3}, grid {4}\n".format(
+                self.pollutant,
+                self.vert_level,
+                self.starting_datetime,
+                self.ending_datetime,
+                self.conc,
+            )
+        )
 
     def is_forward_calculation(self):
         if self.starting_datetime <= self.ending_datetime:
@@ -185,9 +189,7 @@ class ConcentrationDumpFileReader:
 
         # 16 repeitions of hhf
         chunk_sz = 16
-        pre = struct.Struct(">"
-                            "hhfhhfhhfhhfhhfhhfhhfhhf"
-                            "hhfhhfhhfhhfhhfhhfhhfhhf")
+        pre = struct.Struct(">" "hhfhhfhhfhhfhhfhhfhhfhhf" "hhfhhfhhfhhfhhfhhfhhfhhf")
 
         pollutant_dict = dict()  # to map a pollutant to its array index
         level_dict = dict()  # to map a level to its array index
@@ -201,12 +203,13 @@ class ConcentrationDumpFileReader:
             logger.debug("buffer size %d", buffsz)
 
             cur += 4
-            v = struct.unpack_from('>4siiiiiii', buff, cur)
+            v = struct.unpack_from(">4siiiiiii", buff, cur)
             cur += 36
             cdump.meteo_model = v[0].decode(str_code)
             year = util.restore_year(v[1])
             cdump.meteo_starting_datetime = util.make_datetime(
-                year, v[2], v[3], v[4], 0, 0, 0, self.utc)
+                year, v[2], v[3], v[4], 0, 0, 0, self.utc
+            )
             cdump.meteo_forecast_hour = v[5]
             logger.debug("starting location count %d", v[6])
             logger.debug("packing flag %d", v[7])
@@ -215,20 +218,26 @@ class ConcentrationDumpFileReader:
 
             for k in range(start_loc_count):
                 cur += 4
-                v = struct.unpack_from('>iiiifffi', buff, cur)
+                v = struct.unpack_from(">iiiifffi", buff, cur)
                 cur += 36
                 year = util.restore_year(v[0])
-                cdump.release_datetimes.append(util.make_datetime(
-                    year, v[1], v[2], v[3], v[7], 0, 0, self.utc))
+                cdump.release_datetimes.append(
+                    util.make_datetime(year, v[1], v[2], v[3], v[7], 0, 0, self.utc)
+                )
                 cdump.release_locs.append((v[5], v[4]))
                 cdump.release_heights.append(v[6])
-                logger.debug('release {}: date {}, loc ({:.4f}, {:.4f}), height {}'.format(
-                             k, cdump.release_datetimes[-1].strftime('%Y-%m-%d %H:%M'),
-                             cdump.release_locs[-1][0], cdump.release_locs[-1][1],
-                             cdump.release_heights[-1]))
+                logger.debug(
+                    "release {}: date {}, loc ({:.4f}, {:.4f}), height {}".format(
+                        k,
+                        cdump.release_datetimes[-1].strftime("%Y-%m-%d %H:%M"),
+                        cdump.release_locs[-1][0],
+                        cdump.release_locs[-1][1],
+                        cdump.release_heights[-1],
+                    )
+                )
 
             cur += 4
-            v = struct.unpack_from('>iiffff', buff, cur)
+            v = struct.unpack_from(">iiffff", buff, cur)
             cur += 28
             logger.debug("lat/lon point counts %d, %d", v[0], v[1])
             lat_cnt = v[0]
@@ -236,18 +245,22 @@ class ConcentrationDumpFileReader:
             cdump.grid_sz = (v[1], v[0])
             cdump.grid_deltas = (v[3], v[2])
             cdump.grid_loc = (v[5], v[4])
-            cdump.longitudes = [k * cdump.grid_deltas[0] + cdump.grid_loc[0]
-                                for k in range(cdump.grid_sz[0])]
-            cdump.latitudes = [k * cdump.grid_deltas[1] + cdump.grid_loc[1]
-                               for k in range(cdump.grid_sz[1])]
+            cdump.longitudes = [
+                k * cdump.grid_deltas[0] + cdump.grid_loc[0]
+                for k in range(cdump.grid_sz[0])
+            ]
+            cdump.latitudes = [
+                k * cdump.grid_deltas[1] + cdump.grid_loc[1]
+                for k in range(cdump.grid_sz[1])
+            ]
 
             cur += 4
-            v = struct.unpack_from('>i', buff, cur)
+            v = struct.unpack_from(">i", buff, cur)
             cur += 4
             logger.debug("conc grid vertical levels %d", v[0])
             vert_level_count = v[0]
             for k in range(vert_level_count):
-                v = struct.unpack_from('>i', buff, cur)
+                v = struct.unpack_from(">i", buff, cur)
                 cur += 4
                 cdump.vert_levels.append(v[0])
                 level_dict[v[0]] = k
@@ -255,12 +268,12 @@ class ConcentrationDumpFileReader:
             logger.debug("vertical levels %s", cdump.vert_levels)
 
             cur += 4
-            v = struct.unpack_from('>i', buff, cur)
+            v = struct.unpack_from(">i", buff, cur)
             cur += 4
             logger.debug("pollutants %d", v[0])
             pollutant_count = v[0]
             for k in range(pollutant_count):
-                v = struct.unpack_from('>4s', buff, cur)
+                v = struct.unpack_from(">4s", buff, cur)
                 cur += 4
                 str = v[0].decode(str_code)
                 cdump.pollutants.append(str)
@@ -270,19 +283,21 @@ class ConcentrationDumpFileReader:
 
             while cur < buffsz:
                 cur += 4
-                v = struct.unpack_from('>iiiiii', buff, cur)
+                v = struct.unpack_from(">iiiiii", buff, cur)
                 cur += 28
                 year = util.restore_year(v[0])
-                sample_start_time = util.make_datetime(year, v[1], v[2], v[3],
-                                                       v[4], 0, 0, self.utc)
+                sample_start_time = util.make_datetime(
+                    year, v[1], v[2], v[3], v[4], 0, 0, self.utc
+                )
                 sample_start_forecast = v[5]
 
                 cur += 4
-                v = struct.unpack_from('>iiiiii', buff, cur)
+                v = struct.unpack_from(">iiiiii", buff, cur)
                 cur += 28
                 year = util.restore_year(v[0])
-                sample_end_time = util.make_datetime(year, v[1], v[2], v[3],
-                                                     v[4], 0, 0, self.utc)
+                sample_end_time = util.make_datetime(
+                    year, v[1], v[2], v[3], v[4], 0, 0, self.utc
+                )
                 sample_end_forecast = v[5]
 
                 for p_idx in range(pollutant_count):
@@ -297,20 +312,26 @@ class ConcentrationDumpFileReader:
                         g.ending_forecast_hr = sample_end_forecast
 
                         cur += 4
-                        v = struct.unpack_from('>4si', buff, cur)
+                        v = struct.unpack_from(">4si", buff, cur)
                         cur += 8
                         g.pollutant = v[0].decode(str_code)
                         g.vert_level = v[1]
                         if g.pollutant in pollutant_dict:
                             g.pollutant_index = pollutant_dict[g.pollutant]
                         else:
-                            logger.error("undeclared pollutant %s; assuming it to be %s",
-                                         g.pollutant, cdump.pollutants[0])
+                            logger.error(
+                                "undeclared pollutant %s; assuming it to be %s",
+                                g.pollutant,
+                                cdump.pollutants[0],
+                            )
                             # 17 JAN 2020 - workaround
                             g.pollutant_index = 0
                         g.vert_level_index = level_dict[v[1]]
-                        logger.debug("grid for pollutant %s, height %d",
-                                     g.pollutant, g.vert_level)
+                        logger.debug(
+                            "grid for pollutant %s, height %d",
+                            g.pollutant,
+                            g.vert_level,
+                        )
 
                         if packing_flag == 0:
                             count = lon_cnt * lat_cnt
@@ -321,7 +342,7 @@ class ConcentrationDumpFileReader:
                             g.conc = numpy.array(v).reshape(lat_cnt, lon_cnt)
                         elif packing_flag == 1:
                             g.conc = numpy.zeros((lat_cnt, lon_cnt))
-                            v = struct.unpack_from('>i', buff, cur)
+                            v = struct.unpack_from(">i", buff, cur)
                             cur += 4
                             g.nonzero_conc_count = count = v[0]
                             chunk = int(count / chunk_sz)
@@ -334,12 +355,13 @@ class ConcentrationDumpFileReader:
                             left = count % chunk_sz
                             if left > 0:
                                 for k in range(left):
-                                    v = struct.unpack_from('>hhf', buff, cur)
+                                    v = struct.unpack_from(">hhf", buff, cur)
                                     cur += 8
                                     g.conc[v[1] - 1, v[0] - 1] = v[2]
                         else:
-                            raise Exception("unsupported packing option [{}]"
-                                            .format(packing_flag))
+                            raise Exception(
+                                "unsupported packing option [{}]".format(packing_flag)
+                            )
                         cur += 4
 
                 current_time_index += 1
@@ -349,33 +371,33 @@ class ConcentrationDumpFileReader:
 
 class FileWriterDecorator:
 
-   def __init__(self, obj):
-      self.__f = obj
+    def __init__(self, obj):
+        self.__f = obj
 
-   def write(self, b: bytes):
-      self.__f.write(b)
+    def write(self, b: bytes):
+        self.__f.write(b)
 
-   def write_str(self, s: str, n: int):
-      b = bytes(s, 'ascii')
-      if len(b) >= n:
-         self.__f.write(b[0:n])
-      else:
-         self.__f.write(b)
-         b = bytes(' ', 'ascii')
-         for k in range(n - len(b)):
+    def write_str(self, s: str, n: int):
+        b = bytes(s, "ascii")
+        if len(b) >= n:
+            self.__f.write(b[0:n])
+        else:
             self.__f.write(b)
+            b = bytes(" ", "ascii")
+            for k in range(n - len(b)):
+                self.__f.write(b)
 
-   def write_int2(self, v: int):
-      self.__f.write(struct.pack('>h', v))
+    def write_int2(self, v: int):
+        self.__f.write(struct.pack(">h", v))
 
-   def write_int4(self, v: int):
-      self.__f.write(struct.pack('>i', v))
+    def write_int4(self, v: int):
+        self.__f.write(struct.pack(">i", v))
 
-   def write_real4(self, v: float):
-      self.__f.write(struct.pack('>f', v))
+    def write_real4(self, v: float):
+        self.__f.write(struct.pack(">f", v))
 
-   def write_record_marker(self, v: int):
-      self.write_int4(v)
+    def write_record_marker(self, v: int):
+        self.write_int4(v)
 
 
 class ConcentrationDumpFileWriter:
@@ -392,119 +414,118 @@ class ConcentrationDumpFileWriter:
         cdump = self.conc_dump
 
         with open(filename, "wb") as f0:
-           f = FileWriterDecorator(f0)
+            f = FileWriterDecorator(f0)
 
-           # Record #1
-           f.write_record_marker(32)
-           f.write_str(cdump.meteo_model, 4)
-           f.write_int4(self._encode_year(cdump.meteo_starting_datetime.year))
-           f.write_int4(cdump.meteo_starting_datetime.month)
-           f.write_int4(cdump.meteo_starting_datetime.day)
-           f.write_int4(cdump.meteo_starting_datetime.hour)
-           f.write_int4(cdump.meteo_forecast_hour)
-           f.write_int4(len(cdump.release_locs))
-           f.write_int4(self.cpack)
-           f.write_record_marker(32)
+            # Record #1
+            f.write_record_marker(32)
+            f.write_str(cdump.meteo_model, 4)
+            f.write_int4(self._encode_year(cdump.meteo_starting_datetime.year))
+            f.write_int4(cdump.meteo_starting_datetime.month)
+            f.write_int4(cdump.meteo_starting_datetime.day)
+            f.write_int4(cdump.meteo_starting_datetime.hour)
+            f.write_int4(cdump.meteo_forecast_hour)
+            f.write_int4(len(cdump.release_locs))
+            f.write_int4(self.cpack)
+            f.write_record_marker(32)
 
-           # Record #2
-           for k, loc in enumerate(cdump.release_locs):
-              f.write_record_marker(32)
-              f.write_int4(self._encode_year(cdump.release_datetimes[k].year))
-              f.write_int4(cdump.release_datetimes[k].month)
-              f.write_int4(cdump.release_datetimes[k].day)
-              f.write_int4(cdump.release_datetimes[k].hour)
-              f.write_real4(loc[1])
-              f.write_real4(loc[0])
-              f.write_real4(cdump.release_heights[k])
-              f.write_int4(cdump.release_datetimes[k].minute)
-              f.write_record_marker(32)
+            # Record #2
+            for k, loc in enumerate(cdump.release_locs):
+                f.write_record_marker(32)
+                f.write_int4(self._encode_year(cdump.release_datetimes[k].year))
+                f.write_int4(cdump.release_datetimes[k].month)
+                f.write_int4(cdump.release_datetimes[k].day)
+                f.write_int4(cdump.release_datetimes[k].hour)
+                f.write_real4(loc[1])
+                f.write_real4(loc[0])
+                f.write_real4(cdump.release_heights[k])
+                f.write_int4(cdump.release_datetimes[k].minute)
+                f.write_record_marker(32)
 
-           # Record #3
-           f.write_record_marker(24)
-           f.write_int4(cdump.grid_sz[1])
-           f.write_int4(cdump.grid_sz[0])
-           f.write_real4(cdump.grid_deltas[1])
-           f.write_real4(cdump.grid_deltas[0])
-           f.write_real4(cdump.grid_loc[1])
-           f.write_real4(cdump.grid_loc[0])
-           f.write_record_marker(24)
+            # Record #3
+            f.write_record_marker(24)
+            f.write_int4(cdump.grid_sz[1])
+            f.write_int4(cdump.grid_sz[0])
+            f.write_real4(cdump.grid_deltas[1])
+            f.write_real4(cdump.grid_deltas[0])
+            f.write_real4(cdump.grid_loc[1])
+            f.write_real4(cdump.grid_loc[0])
+            f.write_record_marker(24)
 
-           # Record #4
-           n = len(cdump.vert_levels)
-           f.write_record_marker(4 * (1 + n))
-           f.write_int4(n)
-           for h in cdump.vert_levels:
-              f.write_int4(h)
-           f.write_record_marker(4 * (1 + n))
+            # Record #4
+            n = len(cdump.vert_levels)
+            f.write_record_marker(4 * (1 + n))
+            f.write_int4(n)
+            for h in cdump.vert_levels:
+                f.write_int4(h)
+            f.write_record_marker(4 * (1 + n))
 
-           # Record #5
-           n = len(cdump.pollutants)
-           f.write_record_marker(4 * (1 + n))
-           f.write_int4(n)
-           for x in cdump.pollutants:
-              f.write_str(x, 4)
-           f.write_record_marker(4 * (1 + n))
+            # Record #5
+            n = len(cdump.pollutants)
+            f.write_record_marker(4 * (1 + n))
+            f.write_int4(n)
+            for x in cdump.pollutants:
+                f.write_str(x, 4)
+            f.write_record_marker(4 * (1 + n))
 
-           # Records #6, #7, and #8
-           k = 0
-           while k < len(cdump.grids):
-              g = cdump.grids[k]
+            # Records #6, #7, and #8
+            k = 0
+            while k < len(cdump.grids):
+                g = cdump.grids[k]
 
-              # Record #6
-              f.write_record_marker(24)
-              f.write_int4(self._encode_year(g.starting_datetime.year))
-              f.write_int4(g.starting_datetime.month)
-              f.write_int4(g.starting_datetime.day)
-              f.write_int4(g.starting_datetime.hour)
-              f.write_int4(g.starting_datetime.minute)
-              f.write_int4(g.starting_forecast_hr)
-              f.write_record_marker(24)
+                # Record #6
+                f.write_record_marker(24)
+                f.write_int4(self._encode_year(g.starting_datetime.year))
+                f.write_int4(g.starting_datetime.month)
+                f.write_int4(g.starting_datetime.day)
+                f.write_int4(g.starting_datetime.hour)
+                f.write_int4(g.starting_datetime.minute)
+                f.write_int4(g.starting_forecast_hr)
+                f.write_record_marker(24)
 
-              # Record #7
-              f.write_record_marker(24)
-              f.write_int4(self._encode_year(g.ending_datetime.year))
-              f.write_int4(g.ending_datetime.month)
-              f.write_int4(g.ending_datetime.day)
-              f.write_int4(g.ending_datetime.hour)
-              f.write_int4(g.ending_datetime.minute)
-              f.write_int4(g.ending_forecast_hr)
-              f.write_record_marker(24)
+                # Record #7
+                f.write_record_marker(24)
+                f.write_int4(self._encode_year(g.ending_datetime.year))
+                f.write_int4(g.ending_datetime.month)
+                f.write_int4(g.ending_datetime.day)
+                f.write_int4(g.ending_datetime.hour)
+                f.write_int4(g.ending_datetime.minute)
+                f.write_int4(g.ending_forecast_hr)
+                f.write_record_marker(24)
 
-              # Record #8
-              for x in cdump.pollutants:
-                 for h in cdump.vert_levels:
-                    g = cdump.grids[k]
-                    if self.cpack == 1:
-                       mem = io.BytesIO()
-                       f2 = FileWriterDecorator(mem)
-                       nonzero = 0
-                       for j in range(len(cdump.latitudes)):
-                          for i in range(len(cdump.longitudes)):
-                             v = g.conc[j, i]
-                             if v > 0.0:
-                                nonzero += 1
-                                f2.write_int2(i + 1)
-                                f2.write_int2(j + 1)
-                                f2.write_real4(v)
-                       n = 8 * nonzero + 12
-                       f.write_record_marker(n)
-                       f.write_str(x, 4)
-                       f.write_int4(int(h))
-                       f.write_int4(nonzero)
-                       f.write(mem.getbuffer())
-                       f.write_record_marker(n)
-                       mem.close()
-                    else:
-                       n = len(cdump.latitudes) * len(cdump.longitudes) + 2
-                       f.write_record_marker(4 * n)
-                       f.write_str(x, 4)
-                       f.write_int4(int(h))
-                       for j in range(len(cdump.latitudes)):
-                          for i in range(len(cdump.longitudes)):
-                             f.write_real4(g.conc[j, i])
-                       f.write_record_marker(4 * n)
+                # Record #8
+                for x in cdump.pollutants:
+                    for h in cdump.vert_levels:
+                        g = cdump.grids[k]
+                        if self.cpack == 1:
+                            mem = io.BytesIO()
+                            f2 = FileWriterDecorator(mem)
+                            nonzero = 0
+                            for j in range(len(cdump.latitudes)):
+                                for i in range(len(cdump.longitudes)):
+                                    v = g.conc[j, i]
+                                    if v > 0.0:
+                                        nonzero += 1
+                                        f2.write_int2(i + 1)
+                                        f2.write_int2(j + 1)
+                                        f2.write_real4(v)
+                            n = 8 * nonzero + 12
+                            f.write_record_marker(n)
+                            f.write_str(x, 4)
+                            f.write_int4(int(h))
+                            f.write_int4(nonzero)
+                            f.write(mem.getbuffer())
+                            f.write_record_marker(n)
+                            mem.close()
+                        else:
+                            n = len(cdump.latitudes) * len(cdump.longitudes) + 2
+                            f.write_record_marker(4 * n)
+                            f.write_str(x, 4)
+                            f.write_int4(int(h))
+                            for j in range(len(cdump.latitudes)):
+                                for i in range(len(cdump.longitudes)):
+                                    f.write_real4(g.conc[j, i])
+                            f.write_record_marker(4 * n)
 
-                    k += 1
+                        k += 1
 
         return self.conc_dump
-

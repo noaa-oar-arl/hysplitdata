@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class TrajectoryDump:
-    """Holds trajectory data for plotting.
-
-    """
+    """Holds trajectory data for plotting."""
 
     def __init__(self):
         self.trajectory_direction = None
@@ -44,9 +42,7 @@ class TrajectoryDump:
         return False
 
     def get_reader(self):
-        """Create and return a reader instance.
-
-        """
+        """Create and return a reader instance."""
         return TrajectoryDumpFileReader(self)
 
     def get_unique_start_datetimes(self):
@@ -58,8 +54,11 @@ class TrajectoryDump:
         return all if len(all) == 0 else list(set(all))
 
     def get_unique_start_levels(self):
-        all = list(filter(lambda x: x is not None,
-                          [t.starting_level for t in self.trajectories]))
+        all = list(
+            filter(
+                lambda x: x is not None, [t.starting_level for t in self.trajectories]
+            )
+        )
         if len(all) > 0:
             all = list(set(all))
             all.sort()
@@ -127,7 +126,8 @@ class TrajectoryDump:
     def fix_vertical_coordinates(self, vert_coord, height_unit):
         for t in self.trajectories:
             t.vertical_coord = VerticalCoordinateFactory.create_instance(
-                vert_coord, height_unit, t)
+                vert_coord, height_unit, t
+            )
             t.vertical_coord.make_vertical_coordinates()
 
     def fix_start_levels(self):
@@ -140,8 +140,7 @@ class TrajectoryDump:
         self.uniq_start_levels = self.get_unique_start_levels()
         for t in self.trajectories:
             if t.starting_level in self.uniq_start_levels:
-                t.starting_level_index = \
-                    self.uniq_start_levels.index(t.starting_level)
+                t.starting_level_index = self.uniq_start_levels.index(t.starting_level)
 
     def dump(self, stream):
         stream.write("----- begin TrajectoryDump\n")
@@ -165,8 +164,11 @@ class MeteorologicalGrid:
         self.forecast_hour = 0
 
     def dump(self, stream):
-        stream.write("Grid: model {0}, date {1}, forecast hour {2}\n"
-                     .format(self.model, self.datetime, self.forecast_hour))
+        stream.write(
+            "Grid: model {0}, date {1}, forecast hour {2}\n".format(
+                self.model, self.datetime, self.forecast_hour
+            )
+        )
 
 
 class Trajectory:
@@ -196,17 +198,27 @@ class Trajectory:
         self.others = dict()
 
     def dump(self, stream):
-        stream.write("Trajectory: date {0}, latlon {1} {2}, starting "
-                     "level {3}\n".format(
-                        self.starting_datetime,
-                        self.starting_loc[1], self.starting_loc[0],
-                        self.starting_level))
+        stream.write(
+            "Trajectory: date {0}, latlon {1} {2}, starting "
+            "level {3}\n".format(
+                self.starting_datetime,
+                self.starting_loc[1],
+                self.starting_loc[0],
+                self.starting_level,
+            )
+        )
         for k in range(len(self.datetimes)):
-            stream.write("date {4}, age {0}, latlon {1} {2}, height {3}, "
-                         "pressure {5}\n".format(
-                            self.ages[k], self.latitudes[k],
-                            self.longitudes[k], self.heights[k],
-                            self.datetimes[k], self.others["PRESSURE"][k]))
+            stream.write(
+                "date {4}, age {0}, latlon {1} {2}, height {3}, "
+                "pressure {5}\n".format(
+                    self.ages[k],
+                    self.latitudes[k],
+                    self.longitudes[k],
+                    self.heights[k],
+                    self.datetimes[k],
+                    self.others["PRESSURE"][k],
+                )
+            )
 
     @property
     def latitudes(self):
@@ -300,23 +312,24 @@ class Trajectory:
         Set the minute value using the time at the first endpoint.
         """
         if len(self.__datetimes) > 0 and len(self.__ages) > 0 and self.__ages[0] == 0.0:
-            self.starting_datetime = self.starting_datetime.replace(minute=self.__datetimes[0].minute)
+            self.starting_datetime = self.starting_datetime.replace(
+                minute=self.__datetimes[0].minute
+            )
 
     def repair_starting_location(self, t):
         self.starting_loc = (t.longitudes[-2], t.latitudes[-2])
 
     def repair_starting_level(self):
         try:
-            self.starting_level = \
-                self.vertical_coord.repair_starting_level(self.starting_level)
+            self.starting_level = self.vertical_coord.repair_starting_level(
+                self.starting_level
+            )
         except Exception as ex:
             self.starting_level = None
 
 
 class TrajectoryDumpFileReader(io.FormattedTextFileReader):
-    """Reads a trajectory data file.
-
-    """
+    """Reads a trajectory data file."""
 
     def __init__(self, trajectoryData):
         io.FormattedTextFileReader.__init__(self)
@@ -382,15 +395,17 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         gridNumberExceptionCount = 0
         while self.has_next():
             v = self.parse_line(fmt)
-            if self.end_hour_duration <= 0 \
-                    or abs(v[8]) <= self.end_hour_duration:
+            if self.end_hour_duration <= 0 or abs(v[8]) <= self.end_hour_duration:
                 try:
                     g = pd.grids[v[1] - 1]
                 except Exception as ex:
                     if gridNumberExceptionCount == 1:
-                        logger.warning("invalid meteorological grid number %d:"
-                                       " this message will not be repeated for"
-                                       " the current file", v[1])
+                        logger.warning(
+                            "invalid meteorological grid number %d:"
+                            " this message will not be repeated for"
+                            " the current file",
+                            v[1],
+                        )
                     g = None
                     gridNumberExceptionCount += 1
                 t = pd.trajectories[v[0] - 1]
@@ -400,12 +415,17 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
                         t.repair_starting_location(pd.trajectories[v[1] - 1])
                     actual = len(v) - 12
                     if actual != ndiagnostics:
-                        logger.error("expected %d diagnostic(s) but found %d"
-                                     " in the data file", ndiagnostics, actual)
+                        logger.error(
+                            "expected %d diagnostic(s) but found %d"
+                            " in the data file",
+                            ndiagnostics,
+                            actual,
+                        )
                 t.grids.append(g)
                 year = util.restore_year(v[2])
-                t.datetimes.append(util.make_datetime(year, v[3], v[4], v[5],
-                                                      v[6], 0, 0, self.utc))
+                t.datetimes.append(
+                    util.make_datetime(year, v[3], v[4], v[5], v[6], 0, 0, self.utc)
+                )
                 t.forecast_hours.append(v[7])
                 t.ages.append(v[8])
                 t.latitudes.append(v[9])
@@ -428,13 +448,11 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             elif vert_motion.startswith("THETA"):
                 self.vertical_coordinate = const.VerticalCoordinate.THETA
             else:
-                self.vertical_coordinate = \
-                    const.VerticalCoordinate.ABOVE_GROUND_LEVEL
+                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
         elif self.vertical_coordinate == const.VerticalCoordinate.THETA:
             # if model run does not have theta values
             if not vert_motion.startswith("THETA"):
-                self.vertical_coordinate = \
-                    const.VerticalCoordinate.ABOVE_GROUND_LEVEL
+                self.vertical_coordinate = const.VerticalCoordinate.ABOVE_GROUND_LEVEL
 
     def _read_header(self, pd):
 
@@ -443,7 +461,9 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
         ngrid = v[0]
         pd.format_version = 0 if len(v) == 1 else v[1]
         if pd.format_version < 0 or pd.format_version > 2:
-            raise Exception("Unknown trajectory dump format {}".format(pd.format_version))
+            raise Exception(
+                "Unknown trajectory dump format {}".format(pd.format_version)
+            )
 
         # meteorological grids
         for k in range(ngrid):
@@ -451,8 +471,7 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             g = MeteorologicalGrid(pd)
             g.model = v[0]
             year = util.restore_year(v[1])
-            g.datetime = util.make_datetime(year, v[2], v[3], v[4],
-                                            0, 0, 0, self.utc)
+            g.datetime = util.make_datetime(year, v[2], v[3], v[4], 0, 0, 0, self.utc)
             g.forecast_hour = v[5]
             pd.grids.append(g)
 
@@ -482,8 +501,9 @@ class TrajectoryDumpFileReader(io.FormattedTextFileReader):
             v = self.parse_line(fmt)
             t = Trajectory(pd)
             year = util.restore_year(v[0])
-            t.starting_datetime = util.make_datetime(year, v[1], v[2], v[3],
-                                                     0, 0, 0, self.utc)
+            t.starting_datetime = util.make_datetime(
+                year, v[1], v[2], v[3], 0, 0, 0, self.utc
+            )
             t.starting_loc = (v[5], v[4])
             t.starting_level = v[6]
             pd.trajectories.append(t)
